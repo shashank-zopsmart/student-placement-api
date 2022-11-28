@@ -3,16 +3,16 @@ package store
 import "student-placement-api/entities"
 
 type Company interface {
-	Get(id string) (entities.Company, error)
-	Create(id string, name string) (int, error)
-	Update(company entities.Company) (int, error)
-	Delete(id string) (int, error)
+	GetByID(id string) (entities.Company, error)
+	Create(company entities.Company) error
+	Update(company entities.Company) error
+	Delete(id string) error
 }
 
 type Student interface {
-	Get() ([]entities.Student, error)
-	GetById(id string, includeCompany bool) (entities.Student, error)
-	Search(id string, branch string, includeCompany bool) (entities.Student, error)
-	Update(student entities.Student) (int, error)
-	Delete(id string) (int, error)
+	Get(name string, branch string, includeCompany bool) ([]entities.Student, error)
+	GetById(id string) (entities.Student, error)
+	Create(student entities.Student) error
+	Update(student entities.Student) error
+	Delete(id string) error
 }

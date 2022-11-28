@@ -4,17 +4,19 @@ import (
 	"net/http"
 )
 
-type CompanyInterface interface {
-	GetHandler(w http.ResponseWriter, req *http.Request)
-	CreateHandler(w http.ResponseWriter, req *http.Request)
-	UpdateHandler(w http.ResponseWriter, req *http.Request)
-	DeleteHandler(w http.ResponseWriter, req *http.Request) (int, error)
+type Company interface {
+	Handler(w http.ResponseWriter, req *http.Request)
+	GetByID(w http.ResponseWriter, req *http.Request)
+	Create(w http.ResponseWriter, req *http.Request)
+	Update(w http.ResponseWriter, req *http.Request)
+	Delete(w http.ResponseWriter, req *http.Request)
 }
 
-type StudentInterface interface {
-	GetHandler(w http.ResponseWriter, req *http.Request)
+type Student interface {
+	Handler(w http.ResponseWriter, req *http.Request)
+	Get(w http.ResponseWriter, req *http.Request)
 	GetByIdHandler(w http.ResponseWriter, req *http.Request)
-	SearchHandler(w http.ResponseWriter, req *http.Request)
-	UpdateHandler(w http.ResponseWriter, req *http.Request)
-	DeleteHandler(w http.ResponseWriter, req *http.Request)
+	Create(w http.ResponseWriter, req *http.Request)
+	Update(w http.ResponseWriter, req *http.Request)
+	Delete(w http.ResponseWriter, req *http.Request)
 }
