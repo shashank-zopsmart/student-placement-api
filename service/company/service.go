@@ -15,8 +15,8 @@ func New(store store.Company) Service {
 }
 
 // GetByID service to get a company by ID
-func (service Service) GetByID(id string) (entities.Company, error) {
-	return entities.Company{}, nil
+func (service Service) GetByID(id string) entities.Company {
+	return entities.Company{}
 }
 
 // Create service to create a new company

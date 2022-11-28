@@ -15,8 +15,8 @@ func New(store store.Student) Service {
 }
 
 // Get service to get all student or search student by name and branch
-func (service Service) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
-	return []entities.Student{}, nil
+func (service Service) Get(name string, branch string, includeCompany bool) []entities.Student {
+	return []entities.Student{}
 }
 
 // GetByID service to get a student by ID
@@ -25,12 +25,12 @@ func (service Service) GetByID(id string) (entities.Student, error) {
 }
 
 // Create to create a new student
-func (service Service) Create(company entities.Student) error {
+func (service Service) Create(student entities.Student) error {
 	return nil
 }
 
 // Update service to update a particular student
-func (service Service) Update(company entities.Student) error {
+func (service Service) Update(student entities.Student) error {
 	return nil
 }
 

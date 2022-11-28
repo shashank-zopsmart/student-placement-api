@@ -1,7 +1,7 @@
 package entities
 
 type Company struct {
-	ID       string
-	Name     string
-	Category string
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Category string `json:"category"`
 }

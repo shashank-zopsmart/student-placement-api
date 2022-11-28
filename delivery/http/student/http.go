@@ -24,13 +24,13 @@ func (handler Handler) Get(w http.ResponseWriter, req *http.Request) {
 
 }
 
-// Create handler to create new student
-func (handler Handler) Create(w http.ResponseWriter, req *http.Request) {
+// GetById handler ot get student by ID
+func (handler Handler) GetById(w http.ResponseWriter, req *http.Request) {
 
 }
 
-// GetById handler ot get student by ID
-func (handler Handler) GetById(w http.ResponseWriter, req *http.Request) {
+// Create handler to create new student
+func (handler Handler) Create(w http.ResponseWriter, req *http.Request) {
 
 }
 
