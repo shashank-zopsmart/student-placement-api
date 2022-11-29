@@ -87,7 +87,7 @@ func TestService_GetByID(t *testing.T) {
 			"1",
 			nil,
 			entities.Student{"1", "Test Student", "12/12/2000", "CSE",
-				"9876543210", entities.Company{ID: "1"}, "Pending"},
+				"9876543210", entities.Company{ID: "1"}, "PENDING"},
 			"Student with that ID is present so a student should be returned",
 		},
 		{
@@ -311,7 +311,7 @@ func TestService_Delete(t *testing.T) {
 			"1",
 			nil,
 			entities.Student{"1", "Test Student", "12/12/2000", "CSE",
-				"9876543210", entities.Company{ID: "1"}, "Pending"},
+				"9876543210", entities.Company{ID: "1"}, "PENDING"},
 			"Student with that ID should be deleted",
 		},
 		{
@@ -363,7 +363,7 @@ func (m mockStudentStore) GetById(id string) (entities.Student, error) {
 	if id != "1" {
 		return entities.Student{}, errors.New("student not found")
 	}
-	return entities.Student{"1", "Test Student 1", "12/12/2000", "CSE", "9876543210",
+	return entities.Student{"1", "Test Student", "12/12/2000", "CSE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
 }
 
@@ -383,6 +383,7 @@ func (m mockStudentStore) Create(student entities.Student) (entities.Student, er
 	}
 
 	return entities.Student{
+		ID:      "1",
 		Name:    "Test Student",
 		DOB:     "12/12/2000",
 		Phone:   "9876543210",
@@ -425,6 +426,16 @@ func (m mockStudentStore) Delete(id string) (entities.Student, error) {
 	if id != "1" {
 		return entities.Student{}, errors.New("student not found")
 	}
-	return entities.Student{"1", "Test Student 1", "12/12/2000", "CSE", "9876543210",
+	return entities.Student{"1", "Test Student", "12/12/2000", "CSE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
+}
+
+// GetCompany mock store for GetCompany of Student
+func (m mockStudentStore) GetCompany(id string) (entities.Company, error) {
+	if id == "3" {
+		return entities.Company{}, errors.New("company not found")
+	} else if id == "2" {
+		return entities.Company{"2", "Test Company", "DREAM IT"}, nil
+	}
+	return entities.Company{"1", "Test Company", "MASS"}, nil
 }

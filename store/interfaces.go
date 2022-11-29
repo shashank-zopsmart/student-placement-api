@@ -15,4 +15,5 @@ type Student interface {
 	Create(student entities.Student) (entities.Student, error)
 	Update(student entities.Student) (entities.Student, error)
 	Delete(id string) (entities.Student, error)
+	GetCompany(id string) (entities.Company, error)
 }
