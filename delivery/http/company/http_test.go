@@ -61,9 +61,13 @@ func TestHandler_Handler(t *testing.T) {
 	for i := range testcases {
 		var req *http.Request
 		switch testcases[i].method {
-		case http.MethodPost, http.MethodPut:
+		case http.MethodPost:
 			reqBody, _ := json.Marshal(testcases[i].body)
 			req = httptest.NewRequest(testcases[i].method, URL, bytes.NewBuffer(reqBody))
+		case http.MethodPut:
+			reqBody, _ := json.Marshal(testcases[i].body)
+			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(entities.Company).ID,
+				bytes.NewBuffer(reqBody))
 		default:
 			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(string), nil)
 		}
@@ -84,7 +88,7 @@ func TestHandler_Get(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecStatus   int
-		expecResponse entities.Company
+		expecResponse interface{}
 		description   string
 	}{
 		{
@@ -99,10 +103,21 @@ func TestHandler_Get(t *testing.T) {
 			entities.Company{},
 			"Company with that ID is not present so empty json object should be returned wit status code 404",
 		},
+		{
+			"",
+			http.StatusBadRequest,
+			entities.Company{},
+			"Company with that ID is not present so empty json object should be returned wit status code 404",
+		},
 	}
 
 	for i := range testcases {
 		req := httptest.NewRequest(http.MethodGet, URL+"?id="+testcases[i].id, nil)
+
+		if testcases[i].id == "" {
+			req = httptest.NewRequest(http.MethodGet, URL, nil)
+		}
+
 		w := httptest.NewRecorder()
 		handler := New(mockCompanyService{})
 
@@ -120,7 +135,7 @@ func TestHandler_Create(t *testing.T) {
 	testcases := []struct {
 		body          entities.Company
 		expecStatus   int
-		expecResponse error
+		expecResponse interface{}
 		description   string
 	}{
 		{
@@ -129,17 +144,21 @@ func TestHandler_Create(t *testing.T) {
 				Category: "MASS",
 			},
 			http.StatusCreated,
-			nil,
+			entities.Company{
+				ID:       "1",
+				Name:     "Test Company",
+				Category: "MASS",
+			},
 			"Company should be added and status code should be 201",
 		},
 		{
 			entities.Company{
-				Name:     "Test Company 2",
-				Category: "NON-IT",
+				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			errors.New("invalid category"),
-			"Company should not be created as category is not valid and status code should be 400",
+			entities.ResponseMessage{"Error: Name and Category required"},
+			"Company should not be created as both parameters are mandatory is not valid and status code " +
+				"should be 400",
 		},
 	}
 
@@ -178,29 +197,27 @@ func TestHandler_Update(t *testing.T) {
 		},
 		{
 			entities.Company{
-				"2",
-				"Test Company 2",
-				"NON-IT",
+				ID:   "2",
+				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Category"},
-			"Company should not be update as category is not valid and status code should be 400",
+			entities.ResponseMessage{"Error: Name and Category required"},
+			"Company should not be update as category is missing and status code should be 400",
 		},
 		{
 			entities.Company{
-				"3",
-				"Test Company 3",
-				"MASS",
+				Name:     "Test Company 3",
+				Category: "MASS",
 			},
-			http.StatusNotFound,
-			entities.ResponseMessage{"No company with this ID"},
-			"Company should not be update as no company with this id and status code should be 404",
+			http.StatusBadRequest,
+			entities.ResponseMessage{"Error: ID required"},
+			"Company should not be update as id is missing and status code should be 400",
 		},
 	}
 
 	for i := range testcases {
 		reqBody, _ := json.Marshal(testcases[i].body)
-		req := httptest.NewRequest(http.MethodPut, URL, bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPut, URL+"?id="+testcases[i].body.ID, bytes.NewReader(reqBody))
 		w := httptest.NewRecorder()
 		handler := New(mockCompanyService{})
 
@@ -230,8 +247,14 @@ func TestHandler_Delete(t *testing.T) {
 		{
 			"2",
 			http.StatusNotFound,
-			entities.ResponseMessage{"No company with that ID"},
+			entities.ResponseMessage{"Error: Company not found"},
 			"Company with that ID is present so a company should be returned and status code should be 200",
+		},
+		{
+			"",
+			http.StatusBadRequest,
+			entities.ResponseMessage{"Error: ID required"},
+			"Id should be passed in the query paramenter and status code should be 200",
 		},
 	}
 
@@ -252,46 +275,41 @@ func TestHandler_Delete(t *testing.T) {
 type mockCompanyService struct{}
 
 // GetByID mock services for GetByID for Company
-func (m mockCompanyService) GetByID(id string) entities.Company {
+func (m mockCompanyService) GetByID(id string) (entities.Company, error) {
 	if id != "1" {
-		return entities.Company{}
+		return entities.Company{}, errors.New("company not found")
 	}
-	return entities.Company{"1", "Test Company", "MASS"}
+	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
 
 // Create mock service for Create of Company
-func (m mockCompanyService) Create(company entities.Company) error {
-	if company.Name == "" || company.Category == "" {
-		return errors.New("all the fields are required, name and category")
-	}
+func (m mockCompanyService) Create(company entities.Company) (entities.Company, error) {
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
-		return nil
+		return entities.Company{"1", "Test Company", "MASS"}, nil
 	default:
-		return errors.New("invalid category")
+		return entities.Company{}, errors.New("invalid category")
 	}
 }
 
 // Update mock service for Update of Company
-func (m mockCompanyService) Update(company entities.Company) error {
+func (m mockCompanyService) Update(company entities.Company) (entities.Company, error) {
 	if company.ID == "3" {
-		return errors.New("company not found")
+		return entities.Company{}, errors.New("company not found")
 	}
-	if company.ID == "" || company.Name == "" || company.Category == "" {
-		return errors.New("all the fields are required, id, name and category")
-	}
+
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
-		return nil
+		return entities.Company{}, nil
 	default:
-		return errors.New("invalid category")
+		return entities.Company{}, errors.New("invalid category")
 	}
 }
 
 // Delete mock service for Delete of Company
-func (m mockCompanyService) Delete(id string) error {
+func (m mockCompanyService) Delete(id string) (entities.Company, error) {
 	if id != "1" {
-		return errors.New("company not found")
+		return entities.Company{}, errors.New("company not found")
 	}
-	return nil
+	return entities.Company{}, nil
 }

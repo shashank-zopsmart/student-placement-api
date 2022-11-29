@@ -20,16 +20,16 @@ func (store Store) GetByID(id string) (entities.Company, error) {
 }
 
 // Create store to create a new company
-func (store Store) Create(company entities.Company) error {
-	return nil
+func (store Store) Create(company entities.Company) (entities.Student, error) {
+	return entities.Student{}, nil
 }
 
 // Update store to update a particular company
-func (store Store) Update(company entities.Company) error {
-	return nil
+func (store Store) Update(company entities.Company) (entities.Student, error) {
+	return entities.Student{}, nil
 }
 
 // Delete store to delete a particular company
-func (store Store) Delete(id string) error {
-	return nil
+func (store Store) Delete(id string) (entities.Student, error) {
+	return entities.Student{}, nil
 }

@@ -25,11 +25,16 @@ func (store Store) Get(name string, branch string, includeCompany bool) ([]entit
 }
 
 // Create store to create a new student
-func (store Store) Create(student entities.Student) error {
-	return nil
+func (store Store) Create(student entities.Student) (entities.Student, error) {
+	return entities.Student{}, nil
 }
 
 // Update store to update a particular student
-func (store Store) Update(student entities.Student) error {
-	return nil
+func (store Store) Update(student entities.Student) (entities.Student, error) {
+	return entities.Student{}, nil
+}
+
+// Delete store to Delete a particular student
+func (store Store) Delete(student entities.Student) (entities.Student, error) {
+	return entities.Student{}, nil
 }

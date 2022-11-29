@@ -15,21 +15,21 @@ func New(store store.Company) Service {
 }
 
 // GetByID service to get a company by ID
-func (service Service) GetByID(id string) entities.Company {
-	return entities.Company{}
+func (service Service) GetByID(id string) ([]entities.Company, error) {
+	return []entities.Company{}, nil
 }
 
 // Create service to create a new company
-func (service Service) Create(company entities.Company) error {
-	return nil
+func (service Service) Create(company entities.Company) (entities.Company, error) {
+	return entities.Company{}, nil
 }
 
 // Update service to update a particular company
-func (service Service) Update(company entities.Company) error {
-	return nil
+func (service Service) Update(company entities.Company) (entities.Company, error) {
+	return entities.Company{}, nil
 }
 
 // Delete service to delete a particular company
-func (service Service) Delete(id string) error {
-	return nil
+func (service Service) Delete(id string) (entities.Company, error) {
+	return entities.Company{}, nil
 }
