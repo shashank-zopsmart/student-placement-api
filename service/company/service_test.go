@@ -217,13 +217,13 @@ func (m mockCompanyStore) Create(company entities.Company) (entities.Company, er
 
 // Update mock store for Update of Company
 func (m mockCompanyStore) Update(company entities.Company) (entities.Company, error) {
-	if company.ID == "3" {
+	if company.ID != "1" {
 		return entities.Company{}, errors.New("company not found")
 	}
 
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
-		return entities.Company{}, nil
+		return entities.Company{"1", "Test Company", "CORE"}, nil
 	default:
 		return entities.Company{}, errors.New("invalid category")
 	}

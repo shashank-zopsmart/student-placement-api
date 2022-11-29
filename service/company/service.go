@@ -1,6 +1,7 @@
 package company
 
 import (
+	"errors"
 	"student-placement-api/entities"
 	"student-placement-api/store"
 )
@@ -15,21 +16,32 @@ func New(store store.Company) Service {
 }
 
 // GetByID service to get a company by ID
-func (service Service) GetByID(id string) ([]entities.Company, error) {
-	return []entities.Company{}, nil
+func (service Service) GetByID(id string) (entities.Company, error) {
+	return service.store.GetByID(id)
 }
 
 // Create service to create a new company
 func (service Service) Create(company entities.Company) (entities.Company, error) {
-	return entities.Company{}, nil
+	switch company.Category {
+	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
+		return service.store.Create(company)
+	default:
+		return entities.Company{}, errors.New("invalid category")
+	}
 }
 
 // Update service to update a particular company
 func (service Service) Update(company entities.Company) (entities.Company, error) {
+	switch company.Category {
+	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
+		return service.store.Update(company)
+	default:
+		return entities.Company{}, errors.New("invalid category")
+	}
 	return entities.Company{}, nil
 }
 
 // Delete service to delete a particular company
 func (service Service) Delete(id string) (entities.Company, error) {
-	return entities.Company{}, nil
+	return service.store.Delete(id)
 }
