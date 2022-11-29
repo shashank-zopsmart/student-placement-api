@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-// TestService_Get test function to test Company Get service function
-func TestService_Get(t *testing.T) {
+// TestService_GetByID test function to test Company GetByID service function
+func TestService_GetByID(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecError    error
@@ -181,7 +181,7 @@ func TestService_Delete(t *testing.T) {
 	for i := range testcases {
 		service := New(mockCompanyStore{})
 
-		actualResponse, actualErr := service.GetByID(testcases[i].id)
+		actualResponse, actualErr := service.Delete(testcases[i].id)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -234,5 +234,5 @@ func (m mockCompanyStore) Delete(id string) (entities.Company, error) {
 	if id != "1" {
 		return entities.Company{}, errors.New("company not found")
 	}
-	return entities.Company{}, nil
+	return entities.Company{"1", "Test Company", "MASS"}, nil
 }

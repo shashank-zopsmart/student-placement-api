@@ -32,6 +32,10 @@ func (service Service) Create(company entities.Company) (entities.Company, error
 
 // Update service to update a particular company
 func (service Service) Update(company entities.Company) (entities.Company, error) {
+	_, err := service.store.GetByID(company.ID)
+	if err != nil {
+		return entities.Company{}, errors.New("company not found")
+	}
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return service.store.Update(company)
@@ -43,5 +47,9 @@ func (service Service) Update(company entities.Company) (entities.Company, error
 
 // Delete service to delete a particular company
 func (service Service) Delete(id string) (entities.Company, error) {
+	_, err := service.store.GetByID(id)
+	if err != nil {
+		return entities.Company{}, errors.New("company not found")
+	}
 	return service.store.Delete(id)
 }

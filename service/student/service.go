@@ -68,6 +68,11 @@ func (service Service) Create(student entities.Student) (entities.Student, error
 
 // Update service to update a particular student
 func (service Service) Update(student entities.Student) (entities.Student, error) {
+	_, err := service.store.GetById(student.ID)
+	if err != nil {
+		return entities.Student{}, errors.New("student not found")
+	}
+
 	if len(student.Name) < 3 {
 		return entities.Student{}, errors.New("invalid name")
 	}
@@ -83,7 +88,7 @@ func (service Service) Update(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("invalid branch")
 	}
 
-	var company, err = service.store.GetCompany(student.Company.ID)
+	company, err := service.store.GetCompany(student.Company.ID)
 
 	if err != nil {
 		return entities.Student{}, errors.New("invalid company")
@@ -107,5 +112,9 @@ func (service Service) Update(student entities.Student) (entities.Student, error
 
 // Delete service to delete a particular student
 func (service Service) Delete(id string) (entities.Student, error) {
+	_, err := service.store.GetById(id)
+	if err != nil {
+		return entities.Student{}, errors.New("student not found")
+	}
 	return service.store.Delete(id)
 }
