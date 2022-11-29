@@ -487,12 +487,6 @@ func (m mockStudentService) Update(student entities.Student) (entities.Student, 
 		return entities.Student{}, errors.New("student not found")
 	}
 
-	if student.ID == "" || student.Name == "" || student.Phone == "" || student.Company.ID == "" ||
-		student.Branch == "" || student.DOB == "" || student.Status == "" {
-		return entities.Student{}, errors.New("all the fields are required, id, name, phone, dob, branch, " +
-			"company, status")
-	}
-
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
 		return entities.Student{}, errors.New("invalid phone no.")
 	}

@@ -19,7 +19,7 @@ func TestService_Get(t *testing.T) {
 			"1",
 			nil,
 			entities.Company{"1", "Test Company", "MASS"},
-			"Company with that ID is present so a company should be returned and status code should be 200",
+			"Company with that ID is present so a company should be returned",
 		},
 		{
 			"2",
@@ -65,7 +65,7 @@ func TestService_Create(t *testing.T) {
 				Name:     "Test Company",
 				Category: "MASS",
 			},
-			"Company should be added and status code should be 201",
+			"Company should be added",
 		},
 		{
 			entities.Company{
@@ -115,7 +115,7 @@ func TestService_Update(t *testing.T) {
 				"Test Company",
 				"CORE",
 			},
-			"Company should be updated and status code should be 200",
+			"Company should be updated",
 		},
 		{
 			entities.Company{
@@ -168,7 +168,7 @@ func TestService_Delete(t *testing.T) {
 			"1",
 			nil,
 			entities.Company{"1", "Test Company", "MASS"},
-			"Company with that ID should be deleted and status code should be 200",
+			"Company with that ID should be deleted",
 		},
 		{
 			"2",
