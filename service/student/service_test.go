@@ -2,6 +2,7 @@ package student
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"student-placement-api/entities"
 	"testing"
@@ -70,7 +71,7 @@ func TestService_Get(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -110,7 +111,7 @@ func TestService_GetByID(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -197,7 +198,7 @@ func TestService_Create(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -218,11 +219,18 @@ func TestService_Update(t *testing.T) {
 				"ECE",
 				"9876543210",
 				entities.Company{ID: "1"},
-				"CORE",
+				"PENDING",
 			},
 			nil,
-			entities.Student{},
-			"Student should be updated and status code should be 200",
+			entities.Student{"1",
+				"Test Student",
+				"12/12/2000",
+				"ECE",
+				"9876543210",
+				entities.Company{ID: "1"},
+				"PENDING",
+			},
+			"Student should be updated",
 		},
 		{
 			entities.Student{
@@ -234,7 +242,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"ACCEPTED",
 			},
-			errors.New("invalid Branch"),
+			errors.New("invalid branch"),
 			entities.Student{},
 			"Student should not be update as branch is not valid",
 		},
@@ -262,7 +270,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"CORE",
 			},
-			errors.New("invalid status"),
+			errors.New("invalid phone"),
 			entities.Student{},
 			"Student should not be update as status is not valid",
 		},
@@ -288,13 +296,14 @@ func TestService_Update(t *testing.T) {
 		actualResponse, actualErr := service.Update(testcases[i].body)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
+			fmt.Println(actualErr)
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
 				testcases[i].expecResponse, actualResponse, testcases[i].description)
 		}
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -334,7 +343,7 @@ func TestService_Delete(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -399,12 +408,6 @@ func (m mockStudentStore) Update(student entities.Student) (entities.Student, er
 		return entities.Student{}, errors.New("student not found")
 	}
 
-	if student.ID == "" || student.Name == "" || student.Phone == "" || student.Company.ID == "" ||
-		student.Branch == "" || student.DOB == "" || student.Status == "" {
-		return entities.Student{}, errors.New("all the fields are required, id, name, phone, dob, branch, " +
-			"company, status")
-	}
-
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
 		return entities.Student{}, errors.New("invalid phone no.")
 	}
@@ -414,11 +417,12 @@ func (m mockStudentStore) Update(student entities.Student) (entities.Student, er
 		return entities.Student{}, errors.New("invalid branch")
 	}
 
-	if student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED" {
+	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
 		return entities.Student{}, errors.New("invalid status")
 	}
 
-	return entities.Student{}, nil
+	return entities.Student{"1", "Test Student", "12/12/2000", "ECE", "9876543210",
+		entities.Company{ID: "1"}, "PENDING"}, nil
 }
 
 // Delete mock store for Delete of Student

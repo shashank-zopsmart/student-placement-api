@@ -41,7 +41,7 @@ func TestService_Get(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -90,7 +90,7 @@ func TestService_Create(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -151,7 +151,7 @@ func TestService_Update(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }
@@ -190,7 +190,7 @@ func TestService_Delete(t *testing.T) {
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
+				testcases[i].expecError, actualErr, testcases[i].description)
 		}
 	}
 }

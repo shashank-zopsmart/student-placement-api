@@ -102,7 +102,7 @@ func (service Service) Update(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("branch not allowed in this company")
 	}
 
-	return service.store.Create(student)
+	return service.store.Update(student)
 }
 
 // Delete service to delete a particular student
