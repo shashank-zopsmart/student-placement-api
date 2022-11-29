@@ -124,7 +124,7 @@ func TestHandler_Get(t *testing.T) {
 		handler.Get(w, req)
 
 		if w.Code != testcases[i].expecStatus {
-			t.Errorf("Test: %v\t Expected Code: %v\t Actual Code: %v\t Description: %v", i+1,
+			t.Errorf(" Test: %v\n Expected Code: %v\n Actual Code: %v\n Description: %v", i+1,
 				testcases[i].expecStatus, w.Code, testcases[i].description)
 		}
 	}
@@ -171,7 +171,7 @@ func TestHandler_Create(t *testing.T) {
 		handler.Create(w, req)
 
 		if w.Code != testcases[i].expecStatus {
-			t.Errorf("Test: %v\t Expected Code: %v\t Actual Code: %v\t Description: %v", i+1,
+			t.Errorf("Test: %v\n Expected Code: %v\n Actual Code: %v\n Description: %v", i+1,
 				testcases[i].expecStatus, w.Code, testcases[i].description)
 		}
 	}
@@ -224,7 +224,7 @@ func TestHandler_Update(t *testing.T) {
 		handler.Update(w, req)
 
 		if w.Code != testcases[i].expecStatus {
-			t.Errorf("Test: %v\t Expected Code: %v\t Actual Code: %v\t Description: %v", i+1,
+			t.Errorf("Test: %v\n Expected Code: %v\n Actual Code: %v\n Description: %v", i+1,
 				testcases[i].expecStatus, w.Code, testcases[i].description)
 		}
 	}
@@ -266,7 +266,7 @@ func TestHandler_Delete(t *testing.T) {
 		handler.Delete(w, req)
 
 		if w.Code != testcases[i].expecStatus {
-			t.Errorf("Test: %v\t Expected Code: %v\t Actual Code: %v\t Description: %v", i+1,
+			t.Errorf("Test: %v\n Expected Code: %v\n Actual Code: %v\n Description: %v", i+1,
 				testcases[i].expecStatus, w.Code, testcases[i].description)
 		}
 	}

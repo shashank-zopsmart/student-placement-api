@@ -30,6 +30,7 @@ func (handler Handler) Handler(w http.ResponseWriter, req *http.Request) {
 	case http.MethodDelete:
 		handler.Delete(w, req)
 	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		response, _ := json.Marshal(entities.ResponseMessage{"Method not allowed"})
 		w.Write(response)
 	}
@@ -116,7 +117,6 @@ func (handler Handler) Update(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	response, _ := json.Marshal(result)
 	w.Write(response)
-
 }
 
 // Delete handler to delete a particular company

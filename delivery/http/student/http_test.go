@@ -54,17 +54,17 @@ func TestHandler_Handler(t *testing.T) {
 				entities.Company{ID: "1"},
 				"CORE",
 			},
-			http.StatusOK,
-			entities.ResponseMessage{"Student Updated"},
+			http.StatusBadRequest,
+			entities.ResponseMessage{"Error: invalid branch"},
 			http.MethodPut,
 			"Student should be updated and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ResponseMessage{"Company deleted"},
+			entities.ResponseMessage{"Student deleted"},
 			http.MethodDelete,
-			"Company with that ID should be deleted and status code should be 200",
+			"Student with that ID should be deleted and status code should be 200",
 		},
 		{
 			"1",
@@ -96,7 +96,7 @@ func TestHandler_Handler(t *testing.T) {
 	}
 }
 
-// TestHandler_GetByID test function to test Student GetByID handler function
+// TestHandler_Get test function to test Student Get handler function
 func TestHandler_Get(t *testing.T) {
 	type bodyStruct struct {
 		name           string
@@ -112,26 +112,26 @@ func TestHandler_Get(t *testing.T) {
 	}{
 		{
 			bodyStruct{
-				"Test Student",
+				"Student",
 				"CSE",
 				false,
 			},
 			http.StatusOK,
 			[]entities.Student{
-				{"1", "Test Student", "12/12/2000", "CSE",
+				{"1", "Student", "12/12/2000", "CSE",
 					"9876543210", entities.Company{ID: "1"}, "Pending"},
 			},
 			"Student with that name and branch is present so a student should be returned and status code should be 200",
 		},
 		{
 			bodyStruct{
-				"Test Student",
+				"Student",
 				"CSE",
 				true,
 			},
 			http.StatusOK,
 			[]entities.Student{
-				{"1", "Test Student", "12/12/2000", "CSE",
+				{"1", "Student", "12/12/2000", "CSE",
 					"9876543210", entities.Company{"1", "Test Company", "MASS"}, "Pending"},
 			},
 			"Student with that name and branch is present includeCompany flag is true so a student " +
@@ -139,7 +139,7 @@ func TestHandler_Get(t *testing.T) {
 		},
 		{
 			bodyStruct{
-				"Test Student",
+				"Student",
 				"CSE2",
 				false,
 			},
@@ -150,7 +150,7 @@ func TestHandler_Get(t *testing.T) {
 		},
 		{
 			bodyStruct{
-				"Test Student5",
+				"Student5",
 				"CSE",
 				false,
 			},
@@ -162,7 +162,9 @@ func TestHandler_Get(t *testing.T) {
 	}
 
 	for i := range testcases {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%v?name=%v&company=%v&includeCompany=%v", URL,
+		//fmt.Println(fmt.Sprintf("%v?name=%v&branch=%v&includeCompany=%v", URL,
+		//	testcases[i].body.name, testcases[i].body.branch, testcases[i].body.includeCompany))
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%v?name=%v&branch=%v&includeCompany=%v", URL,
 			testcases[i].body.name, testcases[i].body.branch, testcases[i].body.includeCompany), nil)
 		w := httptest.NewRecorder()
 		handler := New(mockStudentService{})
@@ -204,7 +206,7 @@ func TestHandler_GetByID(t *testing.T) {
 		w := httptest.NewRecorder()
 		handler := New(mockStudentService{})
 
-		handler.Get(w, req)
+		handler.GetByID(w, req)
 
 		if w.Code != testcases[i].expecStatus {
 			t.Errorf(" Test: %v\n Expected Code: %v\n Actual Code: %v\n Description: %v", i+1,
@@ -372,7 +374,7 @@ func TestHandler_Update(t *testing.T) {
 
 	for i := range testcases {
 		reqBody, _ := json.Marshal(testcases[i].body)
-		req := httptest.NewRequest(http.MethodPut, URL, bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPut, URL+"?id="+testcases[i].body.ID, bytes.NewReader(reqBody))
 		w := httptest.NewRecorder()
 		handler := New(mockStudentService{})
 
@@ -425,14 +427,25 @@ type mockStudentService struct{}
 
 // Get mock services for Get for Student
 func (m mockStudentService) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
-
-	return []entities.Student{}
+	if name == "Student" && branch == "CSE" {
+		if includeCompany == true {
+			return []entities.Student{
+				{"1", "Student", "12/12/2000", "CSE",
+					"9876543210", entities.Company{"1", "Test Company", "MASS"}, "Pending"},
+			}, nil
+		}
+		return []entities.Student{
+			{"1", "Student", "12/12/2000", "CSE",
+				"9876543210", entities.Company{ID: "1"}, "Pending"},
+		}, nil
+	}
+	return []entities.Student{}, errors.New("student not found")
 }
 
 // GetByID mock services for GetByID for Student
 func (m mockStudentService) GetByID(id string) (entities.Student, error) {
 	if id != "1" {
-		return entities.Student{}, nil
+		return entities.Student{}, errors.New("student not found")
 	}
 	return entities.Student{"1", "Test Student 1", "12/12/2000", "CSE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
@@ -454,7 +467,7 @@ func (m mockStudentService) Create(student entities.Student) (entities.Student, 
 		return entities.Student{}, errors.New("invalid branch")
 	}
 
-	if student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED" {
+	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
 		return entities.Student{}, errors.New("invalid status")
 	}
 
@@ -470,29 +483,30 @@ func (m mockStudentService) Create(student entities.Student) (entities.Student, 
 
 // Update mock service for Update of Student
 func (m mockStudentService) Update(student entities.Student) (entities.Student, error) {
-	if student.ID == "3" {
-		return errors.New("student not found")
+	if student.ID != "1" {
+		return entities.Student{}, errors.New("student not found")
 	}
 
-	if student.ID == "" || student.Name == "" || student.Phone == "" || student.Company == "" ||
+	if student.ID == "" || student.Name == "" || student.Phone == "" || student.Company.ID == "" ||
 		student.Branch == "" || student.DOB == "" || student.Status == "" {
-		return errors.New("all the fields are required, id, name, phone, dob, branch, company, status")
+		return entities.Student{}, errors.New("all the fields are required, id, name, phone, dob, branch, " +
+			"company, status")
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return errors.New("invalid phone no.")
+		return entities.Student{}, errors.New("invalid phone no.")
 	}
 
 	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return errors.New("invalid branch")
+		return entities.Student{}, errors.New("invalid branch")
 	}
 
 	if student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED" {
-		return errors.New("invalid status")
+		return entities.Student{}, errors.New("invalid status")
 	}
 
-	return nil
+	return entities.Student{}, nil
 }
 
 // Delete mock service for Delete of Student
