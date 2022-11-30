@@ -86,7 +86,7 @@ func TestStore_Create(t *testing.T) {
 		store := New(db)
 
 		mock.ExpectExec("INSERT INTO company (id, name, category) VALUES(?, ?, ?)").
-			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.Category).
+			WithArgs("1", testcases[i].input.Name, testcases[i].input.Category).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		actualRes, actualErr := store.Create(testcases[i].input)

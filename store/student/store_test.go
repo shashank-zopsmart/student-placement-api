@@ -210,7 +210,7 @@ func TestStore_Create(t *testing.T) {
 
 		mock.ExpectExec("INSERT INTO student (id, name, dob, phone, branch, companyID, status) "+
 			"VALUES(?, ?, ?, ?, ?, ?, ?)").
-			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.DOB, testcases[i].input.DOB,
+			WithArgs("1", testcases[i].input.Name, testcases[i].input.DOB, testcases[i].input.DOB,
 				testcases[i].input.Phone, testcases[i].input.Branch, testcases[i].input.Company.ID,
 				testcases[i].input.Status).
 			WillReturnResult(sqlmock.NewResult(0, 1))
