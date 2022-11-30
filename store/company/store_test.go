@@ -1,7 +1,7 @@
 package company
 
 import (
-	"errors"
+	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/go-sql-driver/mysql"
 	"reflect"
@@ -9,70 +9,76 @@ import (
 	"testing"
 )
 
+// createMockDb function to create sqlmock db
+func createMockDB() (*sql.DB, sqlmock.Sqlmock, error) {
+	return sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+}
+
 // TestStore_GetByID to test function to test Company GetByID store
 func TestStore_GetByID(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	db, mock, err := createMockDB()
 	if err == nil {
 		defer db.Close()
 	}
 
 	testcases := []struct {
-		id       string
-		expecRes entities.Company
-		expecErr error
+		id     string
+		expRes entities.Company
+		expErr error
+		desc   string
 	}{
-		{"1", entities.Company{"1", "Test Company", "MASS"}, nil},
-		{"2", entities.Company{}, errors.New("company not found")},
+		{"1", entities.Company{"1", "Test Company", "MASS"}, nil,
+			"Company with that ID exists"},
+		{"2", entities.Company{}, sql.ErrNoRows, "No company exists with that ID"},
+		{"2", entities.Company{}, sql.ErrConnDone, "Database connection is closed"},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
 		rows := mock.NewRows([]string{"ID", "Name", "Category"})
-		if testcases[i].expecErr == nil {
-			rows.AddRow(testcases[i].expecRes.ID, testcases[i].expecRes.Name, testcases[i].expecRes.Category)
+		if testcases[i].expErr == nil {
+			rows.AddRow(testcases[i].expRes.ID, testcases[i].expRes.Name, testcases[i].expRes.Category)
 		}
 
 		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
 
 		actualRes, actualErr := store.GetByID(testcases[i].id)
 
-		if !reflect.DeepEqual(actualRes, testcases[i].expecRes) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecRes, actualRes)
+		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
+				actualRes, testcases[i].desc)
 		}
 
-		if !reflect.DeepEqual(actualErr, testcases[i].expecErr) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecErr, actualErr)
+		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,
+				actualErr, testcases[i].desc)
 		}
 	}
 }
 
 // TestStore_Create to test function to test Company Create store
 func TestStore_Create(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	db, mock, err := createMockDB()
 	if err == nil {
 		defer db.Close()
 	}
 
 	testcases := []struct {
-		input    entities.Company
-		expecRes entities.Company
-		expecErr error
+		input  entities.Company
+		expRes entities.Company
+		expErr error
+		desc   string
 	}{
 		{
 			entities.Company{Name: "Test Company", Category: "MASS"},
-			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"},
-			nil,
-		},
-		{
-			entities.Company{Name: "Test Company 2", Category: "DREAM IT"},
-			entities.Company{ID: "2", Name: "Test Company", Category: "DREAM IT"},
-			nil,
+			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
+			"Company should be inserted",
 		},
 		{
 			entities.Company{Name: "Test Company", Category: "OPEN DREAM"},
-			entities.Company{ID: "1", Name: "Test Company", Category: "OPEN DREAM"},
-			nil,
+			entities.Company{ID: "1", Name: "Test Company", Category: "OPEN DREAM"}, sql.ErrConnDone,
+			"Database connection closed",
 		},
 	}
 
@@ -85,37 +91,45 @@ func TestStore_Create(t *testing.T) {
 
 		actualRes, actualErr := store.Create(testcases[i].input)
 
-		if !reflect.DeepEqual(actualRes, testcases[i].expecRes) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecRes, actualRes)
+		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
+				actualRes, testcases[i].desc)
 		}
 
-		if !reflect.DeepEqual(actualErr, testcases[i].expecErr) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecErr, actualErr)
+		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,
+				actualErr, testcases[i].desc)
 		}
 	}
 }
 
 // TestStore_Update to test function to test Company Update store
 func TestStore_Update(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	db, mock, err := createMockDB()
 	if err == nil {
 		defer db.Close()
 	}
 
 	testcases := []struct {
-		input    entities.Company
-		expecRes entities.Company
-		expecErr error
+		input  entities.Company
+		expRes entities.Company
+		expErr error
+		desc   string
 	}{
 		{
 			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"},
-			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"},
-			nil,
+			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
+			"Company detail should be updated",
 		},
 		{
 			entities.Company{ID: "2", Name: "Test Company 2", Category: "DREAM IT"},
-			entities.Company{},
-			errors.New("company not found"),
+			entities.Company{}, sql.ErrNoRows,
+			"Company with that ID doesn't exist",
+		},
+		{
+			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"},
+			entities.Company{}, sql.ErrConnDone,
+			"Database connection closed",
 		},
 	}
 
@@ -128,30 +142,35 @@ func TestStore_Update(t *testing.T) {
 
 		actualRes, actualErr := store.Update(testcases[i].input)
 
-		if !reflect.DeepEqual(actualRes, testcases[i].expecRes) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecRes, actualRes)
+		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
+				actualRes, testcases[i].desc)
 		}
 
-		if !reflect.DeepEqual(actualErr, testcases[i].expecErr) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecErr, actualErr)
+		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,
+				actualErr, testcases[i].desc)
 		}
 	}
 }
 
 // TestStore_Delete to test function to test Company Delete store
 func TestStore_Delete(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	db, mock, err := createMockDB()
 	if err == nil {
 		defer db.Close()
 	}
 
 	testcases := []struct {
-		id       string
-		expecRes entities.Company
-		expecErr error
+		id     string
+		expRes entities.Company
+		expErr error
+		desc   string
 	}{
-		{"1", entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil},
-		{"2", entities.Company{}, errors.New("company not found")},
+		{"1", entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
+			"Company should be deleted"},
+		{"2", entities.Company{}, sql.ErrNoRows, "Company with that ID doesn't exist"},
+		{"2", entities.Company{}, sql.ErrConnDone, "Database connection closed"},
 	}
 
 	for i, _ := range testcases {
@@ -163,12 +182,14 @@ func TestStore_Delete(t *testing.T) {
 
 		actualRes, actualErr := store.Delete(testcases[i].id)
 
-		if !reflect.DeepEqual(actualRes, testcases[i].expecRes) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecRes, actualRes)
+		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
+				actualRes, testcases[i].desc)
 		}
 
-		if !reflect.DeepEqual(actualErr, testcases[i].expecErr) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v", i+1, testcases[i].expecErr, actualErr)
+		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
+			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,
+				actualErr, testcases[i].desc)
 		}
 	}
 }
