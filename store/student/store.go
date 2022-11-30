@@ -35,8 +35,8 @@ func (store store) Update(student entities.Student) (entities.Student, error) {
 }
 
 // Delete store to delete a particular student
-func (store store) Delete(id string) (entities.Student, error) {
-	return entities.Student{}, nil
+func (store store) Delete(id string) error {
+	return nil
 }
 
 // GetCompany store to get company's detail a particular company id

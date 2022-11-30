@@ -163,14 +163,12 @@ func TestStore_Delete(t *testing.T) {
 
 	testcases := []struct {
 		id     string
-		expRes entities.Company
 		expErr error
 		desc   string
 	}{
-		{"1", entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
-			"Company should be deleted"},
-		{"2", entities.Company{}, sql.ErrNoRows, "Company with that ID doesn't exist"},
-		{"2", entities.Company{}, sql.ErrConnDone, "Database connection closed"},
+		{"1", nil, "Company should be deleted"},
+		{"2", sql.ErrNoRows, "Company with that ID doesn't exist"},
+		{"2", sql.ErrConnDone, "Database connection closed"},
 	}
 
 	for i, _ := range testcases {
@@ -180,12 +178,7 @@ func TestStore_Delete(t *testing.T) {
 			WithArgs(testcases[i].id).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		actualRes, actualErr := store.Delete(testcases[i].id)
-
-		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
-				actualRes, testcases[i].desc)
-		}
+		actualErr := store.Delete(testcases[i].id)
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,

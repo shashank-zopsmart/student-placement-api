@@ -6,7 +6,7 @@ type Company interface {
 	GetByID(id string) (entities.Company, error)
 	Create(company entities.Company) (entities.Company, error)
 	Update(company entities.Company) (entities.Company, error)
-	Delete(id string) (entities.Company, error)
+	Delete(id string) error
 }
 
 type Student interface {
@@ -14,6 +14,6 @@ type Student interface {
 	GetById(id string) (entities.Student, error)
 	Create(student entities.Student) (entities.Student, error)
 	Update(student entities.Student) (entities.Student, error)
-	Delete(id string) (entities.Student, error)
+	Delete(id string) error
 	GetCompany(id string) (entities.Company, error)
 }
