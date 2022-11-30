@@ -14,8 +14,8 @@ func New(db *sql.DB) Store {
 	return Store{db}
 }
 
-// GetByID store to get a student by ID
-func (store Store) GetByID(id string) (entities.Student, error) {
+// GetById store to get a student by ID
+func (store Store) GetById(id string) (entities.Student, error) {
 	return entities.Student{}, nil
 }
 
@@ -34,7 +34,12 @@ func (store Store) Update(student entities.Student) (entities.Student, error) {
 	return entities.Student{}, nil
 }
 
-// Delete store to Delete a particular student
-func (store Store) Delete(student entities.Student) (entities.Student, error) {
+// Delete store to delete a particular student
+func (store Store) Delete(id string) (entities.Student, error) {
 	return entities.Student{}, nil
+}
+
+// GetCompany store to get company's detail a particular company id
+func (store Store) GetCompany(id string) (entities.Company, error) {
+	return entities.Company{}, nil
 }
