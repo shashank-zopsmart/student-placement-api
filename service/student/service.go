@@ -2,8 +2,10 @@ package student
 
 import (
 	"errors"
+	"strconv"
 	"student-placement-api/entities"
 	"student-placement-api/store"
+	"time"
 )
 
 type service struct {
@@ -31,6 +33,12 @@ func (service service) Create(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("invalid name")
 	}
 
+	if ageValidate, err := validateAge(student.DOB, 22); err != nil {
+		return entities.Student{}, errors.New("invalid dob, use dd/mm/yyyy")
+	} else if ageValidate == false {
+		return entities.Student{}, errors.New("student doesn't meet minimum age requirement")
+	}
+
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
 		return entities.Student{}, errors.New("invalid phone")
 	}
@@ -47,7 +55,7 @@ func (service service) Create(student entities.Student) (entities.Student, error
 	var company, err = service.store.GetCompany(student.Company.ID)
 
 	if err != nil {
-		return entities.Student{}, errors.New("invalid company")
+		return entities.Student{}, err
 	}
 
 	if company.Category == "DREAM IT" && !(student.Branch == "CSE" || student.Branch == "ISE") {
@@ -70,15 +78,23 @@ func (service service) Create(student entities.Student) (entities.Student, error
 func (service service) Update(student entities.Student) (entities.Student, error) {
 	_, err := service.store.GetById(student.ID)
 	if err != nil {
-		return entities.Student{}, errors.New("student not found")
+		return entities.Student{}, err
 	}
 
 	if len(student.Name) < 3 {
 		return entities.Student{}, errors.New("invalid name")
 	}
+
+	if ageValidate, err := validateAge(student.DOB, 22); err != nil {
+		return entities.Student{}, errors.New("invalid dob, use dd/mm/yyyy")
+	} else if ageValidate == false {
+		return entities.Student{}, errors.New("student doesn't meet minimum age requirement")
+	}
+
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
 		return entities.Student{}, errors.New("invalid phone")
 	}
+
 	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
 		return entities.Student{}, errors.New("invalid status")
 	}
@@ -91,7 +107,7 @@ func (service service) Update(student entities.Student) (entities.Student, error
 	company, err := service.store.GetCompany(student.Company.ID)
 
 	if err != nil {
-		return entities.Student{}, errors.New("invalid company")
+		return entities.Student{}, err
 	}
 
 	if company.Category == "DREAM IT" && !(student.Branch == "CSE" || student.Branch == "ISE") {
@@ -114,7 +130,20 @@ func (service service) Update(student entities.Student) (entities.Student, error
 func (service service) Delete(id string) error {
 	_, err := service.store.GetById(id)
 	if err != nil {
-		return errors.New("student not found")
+		return err
 	}
 	return service.store.Delete(id)
+}
+
+func validateAge(dob string, minAge int) (bool, error) {
+	year := time.Now().Year()
+	yob, err := strconv.Atoi(string(dob[6:]))
+	if err != nil {
+		return false, err
+	}
+	age := year - yob
+	if age >= minAge {
+		return true, nil
+	}
+	return false, nil
 }

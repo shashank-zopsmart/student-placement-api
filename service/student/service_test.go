@@ -1,6 +1,7 @@
 package student
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -45,7 +46,7 @@ func TestService_Get(t *testing.T) {
 			"Student",
 			"CSE2",
 			false,
-			errors.New("student not found"),
+			sql.ErrNoRows,
 			[]entities.Student{},
 			"Student with that name and branch branch is not present error will be thrown",
 		},
@@ -53,7 +54,7 @@ func TestService_Get(t *testing.T) {
 			"Student5",
 			"CSE",
 			false,
-			errors.New("student not found"),
+			sql.ErrNoRows,
 			[]entities.Student{},
 			"Student with that name and branch branch is not present error will be thrown",
 		},
@@ -93,7 +94,7 @@ func TestService_GetByID(t *testing.T) {
 		},
 		{
 			"2",
-			errors.New("student not found"),
+			sql.ErrNoRows,
 			entities.Student{},
 			"Student with that ID is not present so error will be returned",
 		},
@@ -143,7 +144,20 @@ func TestService_Create(t *testing.T) {
 				Company: entities.Company{ID: "1"},
 				Status:  "PENDING",
 			},
-			"Student should be added and status code should be 201",
+			"Student should be added",
+		},
+		{
+			entities.Student{
+				Name:    "Test Student",
+				DOB:     "12/12/2010",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.New("student doesn't meet minimum age requirement"),
+			entities.Student{},
+			"Student should be added as doesn't meet minimum age requirement",
 		},
 		{
 			entities.Student{
@@ -236,6 +250,20 @@ func TestService_Update(t *testing.T) {
 			entities.Student{
 				"1",
 				"Test Student",
+				"12/12/2010",
+				"ECE",
+				"9876543210",
+				entities.Company{ID: "1"},
+				"PENDING",
+			},
+			errors.New("student doesn't meet minimum age requirement"),
+			entities.Student{},
+			"Student should be added as doesn't meet minimum age requirement",
+		},
+		{
+			entities.Student{
+				"1",
+				"Test Student",
 				"12/12/2000",
 				"ECE2",
 				"9876543210",
@@ -284,7 +312,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"PENDING",
 			},
-			errors.New("student not found"),
+			sql.ErrNoRows,
 			entities.Student{},
 			"Student should not be update as no student with this id",
 		},
@@ -317,7 +345,7 @@ func TestService_Delete(t *testing.T) {
 	}{
 		{"1", nil, "Student with that ID should be deleted"},
 		{
-			"2", errors.New("student not found"),
+			"2", sql.ErrNoRows,
 			"Student with that ID is not present so error will be thrown",
 		},
 	}
@@ -350,13 +378,13 @@ func (m mockStudentStore) Get(name string, branch string, includeCompany bool) (
 				"9876543210", entities.Company{ID: "1"}, "Pending"},
 		}, nil
 	}
-	return []entities.Student{}, errors.New("student not found")
+	return []entities.Student{}, sql.ErrNoRows
 }
 
 // GetById mock store for GetById for Student
 func (m mockStudentStore) GetById(id string) (entities.Student, error) {
 	if id != "1" {
-		return entities.Student{}, errors.New("student not found")
+		return entities.Student{}, sql.ErrNoRows
 	}
 	return entities.Student{"1", "Test Student", "12/12/2000", "CSE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
@@ -391,7 +419,7 @@ func (m mockStudentStore) Create(student entities.Student) (entities.Student, er
 // Update mock store for Update of Student
 func (m mockStudentStore) Update(student entities.Student) (entities.Student, error) {
 	if student.ID != "1" {
-		return entities.Student{}, errors.New("student not found")
+		return entities.Student{}, sql.ErrNoRows
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
@@ -414,7 +442,7 @@ func (m mockStudentStore) Update(student entities.Student) (entities.Student, er
 // Delete mock store for Delete of Student
 func (m mockStudentStore) Delete(id string) error {
 	if id != "1" {
-		return errors.New("student not found")
+		return sql.ErrNoRows
 	}
 	return nil
 }
@@ -422,7 +450,7 @@ func (m mockStudentStore) Delete(id string) error {
 // GetCompany mock store for GetCompany of Student
 func (m mockStudentStore) GetCompany(id string) (entities.Company, error) {
 	if id == "3" {
-		return entities.Company{}, errors.New("company not found")
+		return entities.Company{}, sql.ErrNoRows
 	} else if id == "2" {
 		return entities.Company{"2", "Test Company", "DREAM IT"}, nil
 	}

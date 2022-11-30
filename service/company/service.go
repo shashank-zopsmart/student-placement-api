@@ -34,7 +34,7 @@ func (service Service) Create(company entities.Company) (entities.Company, error
 func (service Service) Update(company entities.Company) (entities.Company, error) {
 	_, err := service.store.GetByID(company.ID)
 	if err != nil {
-		return entities.Company{}, errors.New("company not found")
+		return entities.Company{}, err
 	}
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
@@ -42,14 +42,13 @@ func (service Service) Update(company entities.Company) (entities.Company, error
 	default:
 		return entities.Company{}, errors.New("invalid category")
 	}
-	return entities.Company{}, nil
 }
 
 // Delete service to delete a particular company
 func (service Service) Delete(id string) error {
 	_, err := service.store.GetByID(id)
 	if err != nil {
-		return errors.New("company not found")
+		return err
 	}
 	return service.store.Delete(id)
 }

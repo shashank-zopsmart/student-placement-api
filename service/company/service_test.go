@@ -1,6 +1,7 @@
 package company
 
 import (
+	"database/sql"
 	"errors"
 	"reflect"
 	"student-placement-api/entities"
@@ -23,7 +24,7 @@ func TestService_GetByID(t *testing.T) {
 		},
 		{
 			"2",
-			errors.New("company not found"),
+			sql.ErrNoRows,
 			entities.Company{},
 			"Company with that ID is not present so error will be thrown",
 		},
@@ -133,7 +134,7 @@ func TestService_Update(t *testing.T) {
 				"Test Company",
 				"CORE",
 			},
-			errors.New("company not found"),
+			sql.ErrNoRows,
 			entities.Company{},
 			"Company should not be updated because of invalid category error will be thrown",
 		},
@@ -165,7 +166,7 @@ func TestService_Delete(t *testing.T) {
 	}{
 		{"1", nil, "Company with that ID should be deleted"},
 		{
-			"2", errors.New("company not found"),
+			"2", sql.ErrNoRows,
 			"Company with that ID not is present error will be thrown",
 		},
 	}
@@ -187,7 +188,7 @@ type mockCompanyStore struct{}
 // GetByID mock store for GetByID for Company
 func (m mockCompanyStore) GetByID(id string) (entities.Company, error) {
 	if id != "1" {
-		return entities.Company{}, errors.New("company not found")
+		return entities.Company{}, sql.ErrNoRows
 	}
 	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
@@ -205,7 +206,7 @@ func (m mockCompanyStore) Create(company entities.Company) (entities.Company, er
 // Update mock store for Update of Company
 func (m mockCompanyStore) Update(company entities.Company) (entities.Company, error) {
 	if company.ID != "1" {
-		return entities.Company{}, errors.New("company not found")
+		return entities.Company{}, sql.ErrNoRows
 	}
 
 	switch company.Category {
@@ -219,7 +220,7 @@ func (m mockCompanyStore) Update(company entities.Company) (entities.Company, er
 // Delete mock store for Delete of Company
 func (m mockCompanyStore) Delete(id string) error {
 	if id != "1" {
-		return errors.New("company not found")
+		return sql.ErrNoRows
 	}
 	return nil
 }
