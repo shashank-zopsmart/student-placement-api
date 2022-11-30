@@ -82,9 +82,7 @@ func TestStore_Get(t *testing.T) {
 						testcases[i].expecRes[j].Company.ID, testcases[i].expecRes[j].Status)
 				}
 			}
-			mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, "+
-				"student.phone AS phone, student.branch AS branch, company.id AS companyID, student.status AS status "+
-				"FROM student JOIN company ON student.id=company.id WHERE student.name=? AND student.branch=?").
+			mock.ExpectQuery("SELECT * FROM student WHERE student.name=? AND student.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 		}
 
