@@ -27,10 +27,11 @@ func TestStore_Get(t *testing.T) {
 	}
 
 	testcases := []struct {
-		input  inputStruct
-		expRes []entities.Student
-		expErr error
-		desc   string
+		input    inputStruct
+		expRes   []entities.Student
+		mockRows []entities.Student
+		expErr   error
+		desc     string
 	}{
 		{
 			inputStruct{"Test Company", "CSE", false},
@@ -38,6 +39,12 @@ func TestStore_Get(t *testing.T) {
 				{
 					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
 					entities.Company{ID: "1"}, "PENDING"},
+			},
+			[]entities.Student{
+				{
+					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
+					entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, "PENDING",
+				},
 			},
 			nil, "Student with that ID exists so student should be returned",
 		},
@@ -49,23 +56,38 @@ func TestStore_Get(t *testing.T) {
 					entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, "PENDING",
 				},
 			},
-			nil, "Student with that ID exists so student should be returned",
-		},
-		{inputStruct{"Test Company", "CSE2", false}, []entities.Student{},
-			sql.ErrNoRows, "Student with that ID doesn't exit"},
-		{inputStruct{"Test Company 4", "CSE", false}, []entities.Student{},
-			sql.ErrNoRows, "Student with that ID doesn't exit"},
-		{inputStruct{"Test Company3", "CSE2", false}, []entities.Student{},
-			sql.ErrNoRows, "Student with that ID doesn't exit"},
-		{
-			inputStruct{"Test Company", "CSE", false},
 			[]entities.Student{
 				{
 					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
-					entities.Company{ID: "1"}, "PENDING"},
+					entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, "PENDING",
+				},
 			},
-			sql.ErrConnDone, "Database connection closed",
+			nil, "Student with that ID exists so student should be returned",
 		},
+		{inputStruct{"Test Student", "CSE2", false}, []entities.Student{},
+			[]entities.Student{
+				{
+					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
+					entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, "PENDING",
+				},
+			},
+			sql.ErrNoRows, "Student with that name and branch doesn't exit"},
+		{inputStruct{"Test Student 4", "CSE", false}, []entities.Student{},
+			[]entities.Student{
+				{
+					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
+					entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, "PENDING",
+				},
+			},
+			sql.ErrNoRows, "Student with that name and branch doesn't exit"},
+		{inputStruct{"Test Student 4", "CSE2", false}, []entities.Student{},
+			[]entities.Student{
+				{
+					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
+					entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, "PENDING",
+				},
+			},
+			sql.ErrNoRows, "Student with that name and branch doesn't exit"},
 	}
 
 	for i, _ := range testcases {
@@ -78,10 +100,10 @@ func TestStore_Get(t *testing.T) {
 
 			if testcases[i].expErr == nil {
 				for j, _ := range testcases[i].expRes {
-					rows.AddRow(testcases[i].expRes[j].ID, testcases[i].expRes[j].Name, testcases[i].expRes[j].DOB,
-						testcases[i].expRes[j].Phone, testcases[i].expRes[j].Branch,
-						testcases[i].expRes[j].Company.ID, testcases[i].expRes[j].Company.Name,
-						testcases[i].expRes[j].Company.Category, testcases[i].expRes[j].Status)
+					rows.AddRow(testcases[i].mockRows[j].ID, testcases[i].mockRows[j].Name, testcases[i].mockRows[j].DOB,
+						testcases[i].mockRows[j].Phone, testcases[i].mockRows[j].Branch,
+						testcases[i].mockRows[j].Company.ID, testcases[i].mockRows[j].Company.Name,
+						testcases[i].mockRows[j].Company.Category, testcases[i].mockRows[j].Status)
 				}
 			}
 
@@ -95,9 +117,9 @@ func TestStore_Get(t *testing.T) {
 			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
 			if testcases[i].expErr == nil {
 				for j, _ := range testcases[i].expRes {
-					rows.AddRow(testcases[i].expRes[j].ID, testcases[i].expRes[j].Name, testcases[i].expRes[j].DOB,
-						testcases[i].expRes[j].Phone, testcases[i].expRes[j].Branch,
-						testcases[i].expRes[j].Company.ID, testcases[i].expRes[j].Status)
+					rows.AddRow(testcases[i].mockRows[j].ID, testcases[i].mockRows[j].Name, testcases[i].mockRows[j].DOB,
+						testcases[i].mockRows[j].Phone, testcases[i].mockRows[j].Branch,
+						testcases[i].mockRows[j].Company.ID, testcases[i].mockRows[j].Status)
 				}
 			}
 
@@ -136,9 +158,6 @@ func TestStore_GetById(t *testing.T) {
 		{"1", entities.Student{"1", "Test Student", "12/12/2000", "CSE",
 			"9876543210", entities.Company{ID: "1"}, "PENDING"}, nil, "Student with that ID exists"},
 		{"2", entities.Student{}, sql.ErrNoRows, "Student with that ID doesn't exist"},
-		{"1", entities.Student{"1", "Test Student", "12/12/2000", "CSE",
-			"9876543210", entities.Company{ID: "1"}, "PENDING"}, sql.ErrConnDone,
-			"Database connection closed"},
 	}
 
 	for i, _ := range testcases {
@@ -191,36 +210,27 @@ func TestStore_Create(t *testing.T) {
 		},
 		{
 			entities.Student{Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
-				Company: entities.Company{ID: "1"}, Status: "PENDING"},
+				Company: entities.Company{ID: "5"}, Status: "PENDING"},
 			entities.Student{ID: "1", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210",
 				Branch: "CSE", Company: entities.Company{ID: "5"}, Status: "PENDING"},
 			sql.ErrNoRows, "Company with that ID doesn't exist",
-		},
-		{
-			entities.Student{Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
-				Company: entities.Company{ID: "1"}, Status: "PENDING"},
-			entities.Student{ID: "1", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210",
-				Branch: "CSE", Company: entities.Company{ID: "1"}, Status: "PENDING"},
-			sql.ErrConnDone, "Database connection closed",
 		},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
+		rows := sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
+		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
+
 		mock.ExpectExec("INSERT INTO student (id, name, dob, phone, branch, companyID, status) "+
 			"VALUES(?, ?, ?, ?, ?, ?, ?)").
-			WithArgs("1", testcases[i].input.Name, testcases[i].input.DOB, testcases[i].input.DOB,
+			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.DOB,
 				testcases[i].input.Phone, testcases[i].input.Branch, testcases[i].input.Company.ID,
 				testcases[i].input.Status).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		actualRes, actualErr := store.Create(testcases[i].input)
-
-		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
-				actualRes, testcases[i].desc)
-		}
+		_, actualErr := store.Create(testcases[i].input)
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,
@@ -253,10 +263,9 @@ func TestStore_Update(t *testing.T) {
 		{
 			entities.Student{ID: "1", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
 				Company: entities.Company{ID: "2"}, Status: "PENDING"},
-			entities.Student{ID: "1", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210",
-				Branch: "CSE", Company: entities.Company{ID: "2"}, Status: "PENDING"},
-			nil,
-			"Student should be updated",
+			entities.Student{},
+			sql.ErrNoRows,
+			"Company with that ID doesn't exist",
 		},
 		{
 			entities.Student{ID: "6", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
@@ -270,10 +279,21 @@ func TestStore_Update(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
+		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
+		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE",
+			"1", "PENDING")
+		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
+			"student.phone AS phone, student.branch AS branch, company.id AS companyID, student.status AS status " +
+			"FROM student JOIN company ON student.id=company.id WHERE student.id=?").WithArgs("1").
+			WillReturnRows(rows)
+
+		rows = sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
+		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
+
 		mock.ExpectExec("UPDATE student SET name=?, phone=?, dob=?, branch=?, company=?, status=? WHERE id=?").
-			WithArgs(testcases[i].input.Name, testcases[i].input.DOB, testcases[i].input.DOB,
-				testcases[i].input.Phone, testcases[i].input.Branch, testcases[i].input.Company.ID,
-				testcases[i].input.Status, testcases[i].input.ID).
+			WithArgs(testcases[i].input.Name, testcases[i].input.Phone, testcases[i].input.DOB,
+				testcases[i].input.Branch, testcases[i].input.Company.ID, testcases[i].input.Status,
+				testcases[i].input.ID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		actualRes, actualErr := store.Update(testcases[i].input)
@@ -304,11 +324,18 @@ func TestStore_Delete(t *testing.T) {
 	}{
 		{"1", nil, "Student exists so should be deleted"},
 		{"2", sql.ErrNoRows, "Student doesn't exits"},
-		{"1", sql.ErrConnDone, "Database connection closed"},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
+
+		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
+		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE",
+			"1", "PENDING")
+		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
+			"student.phone AS phone, student.branch AS branch, company.id AS companyID, student.status AS status " +
+			"FROM student JOIN company ON student.id=company.id WHERE student.id=?").WithArgs("1").
+			WillReturnRows(rows)
 
 		mock.ExpectExec("DELETE FROM student WHERE id=?").
 			WithArgs(testcases[i].id).
@@ -340,8 +367,6 @@ func TestStore_GetCompany(t *testing.T) {
 			"Company with that ID exists"},
 		{"1", entities.Company{}, sql.ErrNoRows,
 			"Company with that ID doesn't exist"},
-		{"1", entities.Company{}, sql.ErrConnDone,
-			"Database connection closed"},
 	}
 
 	for i, _ := range testcases {
