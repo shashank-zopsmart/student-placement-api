@@ -2,6 +2,7 @@ package company
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -277,7 +278,7 @@ type mockCompanyService struct{}
 // GetByID mock services for GetByID for Company
 func (m mockCompanyService) GetByID(id string) (entities.Company, error) {
 	if id != "1" {
-		return entities.Company{}, errors.New("company not found")
+		return entities.Company{}, sql.ErrNoRows
 	}
 	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
@@ -295,7 +296,7 @@ func (m mockCompanyService) Create(company entities.Company) (entities.Company, 
 // Update mock service for Update of Company
 func (m mockCompanyService) Update(company entities.Company) (entities.Company, error) {
 	if company.ID == "3" {
-		return entities.Company{}, errors.New("company not found")
+		return entities.Company{}, sql.ErrNoRows
 	}
 
 	switch company.Category {
@@ -307,9 +308,9 @@ func (m mockCompanyService) Update(company entities.Company) (entities.Company, 
 }
 
 // Delete mock service for Delete of Company
-func (m mockCompanyService) Delete(id string) (entities.Company, error) {
+func (m mockCompanyService) Delete(id string) error {
 	if id != "1" {
-		return entities.Company{}, errors.New("company not found")
+		return sql.ErrNoRows
 	}
-	return entities.Company{}, nil
+	return nil
 }

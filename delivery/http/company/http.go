@@ -49,7 +49,7 @@ func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.GetByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(result)
+		response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
 		w.Write(response)
 		return
 	}
@@ -129,7 +129,7 @@ func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err := handler.service.Delete(id)
+	err := handler.service.Delete(id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

@@ -195,7 +195,7 @@ func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err := handler.service.Delete(id)
+	err := handler.service.Delete(id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

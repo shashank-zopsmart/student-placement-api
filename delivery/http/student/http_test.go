@@ -2,6 +2,7 @@ package student
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,12 @@ const URL = "http://localhost:8080/student"
 
 // TestHandler_Handler test function to test Student main handler function
 func TestHandler_Handler(t *testing.T) {
+	type bodyStruct struct {
+		id             string
+		name           string
+		branch         string
+		includeCompany string
+	}
 	testcases := []struct {
 		body          interface{}
 		expecStatus   int
@@ -23,12 +30,19 @@ func TestHandler_Handler(t *testing.T) {
 		description   string
 	}{
 		{
-			"1",
+			bodyStruct{id: "1"},
 			http.StatusOK,
 			entities.Student{"1", "Test Student", "12/12/2000", "CSE",
 				"9876543210", entities.Company{ID: "1"}, "Pending"},
 			http.MethodGet,
 			"Student with that ID is present so a company should be returned and status code should be 200",
+		},
+		{
+			bodyStruct{"", "", "", ""},
+			http.StatusBadRequest,
+			entities.Student{},
+			http.MethodGet,
+			"No id, name, branch and includeCompany given status code should be 400",
 		},
 		{
 			entities.Student{
@@ -81,8 +95,12 @@ func TestHandler_Handler(t *testing.T) {
 		case http.MethodPost, http.MethodPut:
 			reqBody, _ := json.Marshal(testcases[i].body)
 			req = httptest.NewRequest(testcases[i].method, URL, bytes.NewBuffer(reqBody))
-		default:
+		case http.MethodDelete:
 			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(string), nil)
+		default:
+			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(bodyStruct).id+
+				"&name="+testcases[i].body.(bodyStruct).name+"&branch="+testcases[i].body.(bodyStruct).branch+
+				"&includeCompany="+testcases[i].body.(bodyStruct).includeCompany, nil)
 		}
 		w := httptest.NewRecorder()
 		handler := New(mockStudentService{})
@@ -366,7 +384,7 @@ func TestHandler_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"PENDING",
 			},
-			http.StatusNotFound,
+			http.StatusBadRequest,
 			entities.ResponseMessage{"No student with this ID"},
 			"Student should not be update as no student with this id and status code should be 404",
 		},
@@ -484,7 +502,7 @@ func (m mockStudentService) Create(student entities.Student) (entities.Student, 
 // Update mock service for Update of Student
 func (m mockStudentService) Update(student entities.Student) (entities.Student, error) {
 	if student.ID != "1" {
-		return entities.Student{}, errors.New("student not found")
+		return entities.Student{}, sql.ErrNoRows
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
@@ -504,10 +522,9 @@ func (m mockStudentService) Update(student entities.Student) (entities.Student, 
 }
 
 // Delete mock service for Delete of Student
-func (m mockStudentService) Delete(id string) (entities.Student, error) {
+func (m mockStudentService) Delete(id string) error {
 	if id != "1" {
-		return entities.Student{}, errors.New("student not found")
+		return sql.ErrNoRows
 	}
-	return entities.Student{"1", "Test Student 1", "12/12/2000", "CSE", "9876543210",
-		entities.Company{ID: "1"}, "PENDING"}, nil
+	return nil
 }
