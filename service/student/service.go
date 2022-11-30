@@ -6,27 +6,27 @@ import (
 	"student-placement-api/store"
 )
 
-type Service struct {
+type service struct {
 	store store.Student
 }
 
 // New factory function to return service object and do dependency injection
-func New(store store.Student) Service {
-	return Service{store: store}
+func New(store store.Student) service {
+	return service{store: store}
 }
 
 // Get service to get all student or search student by name and branch
-func (service Service) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
+func (service service) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
 	return service.store.Get(name, branch, includeCompany)
 }
 
 // GetByID service to get a student by ID
-func (service Service) GetByID(id string) (entities.Student, error) {
+func (service service) GetByID(id string) (entities.Student, error) {
 	return service.store.GetById(id)
 }
 
 // Create to create a new student
-func (service Service) Create(student entities.Student) (entities.Student, error) {
+func (service service) Create(student entities.Student) (entities.Student, error) {
 	if len(student.Name) < 3 {
 		return entities.Student{}, errors.New("invalid name")
 	}
@@ -67,7 +67,7 @@ func (service Service) Create(student entities.Student) (entities.Student, error
 }
 
 // Update service to update a particular student
-func (service Service) Update(student entities.Student) (entities.Student, error) {
+func (service service) Update(student entities.Student) (entities.Student, error) {
 	_, err := service.store.GetById(student.ID)
 	if err != nil {
 		return entities.Student{}, errors.New("student not found")
@@ -111,7 +111,7 @@ func (service Service) Update(student entities.Student) (entities.Student, error
 }
 
 // Delete service to delete a particular student
-func (service Service) Delete(id string) (entities.Student, error) {
+func (service service) Delete(id string) (entities.Student, error) {
 	_, err := service.store.GetById(id)
 	if err != nil {
 		return entities.Student{}, errors.New("student not found")

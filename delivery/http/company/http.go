@@ -8,17 +8,17 @@ import (
 	"student-placement-api/service"
 )
 
-type Handler struct {
+type handler struct {
 	service service.Company
 }
 
 // New factory function to return handler object and do dependency injection
-func New(service service.Company) Handler {
-	return Handler{service: service}
+func New(service service.Company) handler {
+	return handler{service: service}
 }
 
 // Handler main handler for the /company endpoint
-func (handler Handler) Handler(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch req.Method {
 	case http.MethodGet:
@@ -37,7 +37,7 @@ func (handler Handler) Handler(w http.ResponseWriter, req *http.Request) {
 }
 
 // Get handler to get company detail by ID
-func (handler Handler) Get(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -59,7 +59,7 @@ func (handler Handler) Get(w http.ResponseWriter, req *http.Request) {
 }
 
 // Create handler to create a new company
-func (handler Handler) Create(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 	reqBody, _ := io.ReadAll(req.Body)
 	var company entities.Company
 	json.Unmarshal(reqBody, &company)
@@ -85,7 +85,7 @@ func (handler Handler) Create(w http.ResponseWriter, req *http.Request) {
 }
 
 // Update handler to update a particular company
-func (handler Handler) Update(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -120,7 +120,7 @@ func (handler Handler) Update(w http.ResponseWriter, req *http.Request) {
 }
 
 // Delete handler to delete a particular company
-func (handler Handler) Delete(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)

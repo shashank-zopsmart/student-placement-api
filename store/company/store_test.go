@@ -32,6 +32,7 @@ func TestStore_GetByID(t *testing.T) {
 		if testcases[i].expecErr == nil {
 			rows.AddRow(testcases[i].expecRes.ID, testcases[i].expecRes.Name, testcases[i].expecRes.Category)
 		}
+
 		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
 
 		actualRes, actualErr := store.GetByID(testcases[i].id)

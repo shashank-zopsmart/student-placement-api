@@ -60,6 +60,7 @@ func TestStore_Get(t *testing.T) {
 		case true:
 			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "companyName",
 				"companyCategory", "status"})
+
 			if testcases[i].expecErr == nil {
 				for j, _ := range testcases[i].expecRes {
 					rows.AddRow(testcases[i].expecRes[j].ID, testcases[i].expecRes[j].Name, testcases[i].expecRes[j].DOB,
@@ -68,11 +69,13 @@ func TestStore_Get(t *testing.T) {
 						testcases[i].expecRes[j].Company.Category, testcases[i].expecRes[j].Status)
 				}
 			}
+
 			mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, "+
 				"student.phone AS phone, student.branch AS branch, company.id AS companyID, company.name AS companyName, "+
 				"company.category AS companyCategory, student.status AS status FROM student JOIN company "+
 				"ON student.id=company.id WHERE student.name=? AND student.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
+
 		case false:
 			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
 			if testcases[i].expecErr == nil {
@@ -82,6 +85,7 @@ func TestStore_Get(t *testing.T) {
 						testcases[i].expecRes[j].Company.ID, testcases[i].expecRes[j].Status)
 				}
 			}
+
 			mock.ExpectQuery("SELECT * FROM student WHERE student.name=? AND student.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 		}

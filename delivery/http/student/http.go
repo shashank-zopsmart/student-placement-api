@@ -9,17 +9,17 @@ import (
 	"student-placement-api/service"
 )
 
-type Handler struct {
+type handler struct {
 	service service.Student
 }
 
 // New factory function to return handler object and do dependency injection
-func New(service service.Student) Handler {
-	return Handler{service: service}
+func New(service service.Student) handler {
+	return handler{service: service}
 }
 
 // Handler main handler for /student endpoint
-func (handler Handler) Handler(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	switch req.Method {
 	case http.MethodGet:
@@ -61,7 +61,7 @@ func (handler Handler) Handler(w http.ResponseWriter, req *http.Request) {
 }
 
 // Get handler to get all students
-func (handler Handler) Get(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	name := req.URL.Query().Get("name")
 	branch := req.URL.Query().Get("branch")
 	includeCompany := req.URL.Query().Get("includeCompany")
@@ -91,7 +91,7 @@ func (handler Handler) Get(w http.ResponseWriter, req *http.Request) {
 }
 
 // GetByID handler ot get student by ID
-func (handler Handler) GetByID(w http.ResponseWriter, req *http.Request) {
+func (handler handler) GetByID(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 
 	result, err := handler.service.GetByID(id)
@@ -108,7 +108,7 @@ func (handler Handler) GetByID(w http.ResponseWriter, req *http.Request) {
 }
 
 // Create handler to create new student
-func (handler Handler) Create(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -143,7 +143,7 @@ func (handler Handler) Create(w http.ResponseWriter, req *http.Request) {
 }
 
 // Update handler to update a particular student
-func (handler Handler) Update(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -186,7 +186,7 @@ func (handler Handler) Update(w http.ResponseWriter, req *http.Request) {
 }
 
 // Delete handler to delete a particular student
-func (handler Handler) Delete(w http.ResponseWriter, req *http.Request) {
+func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
