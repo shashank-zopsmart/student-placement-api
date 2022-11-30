@@ -111,10 +111,10 @@ func (service service) Update(student entities.Student) (entities.Student, error
 }
 
 // Delete service to delete a particular student
-func (service service) Delete(id string) (entities.Student, error) {
+func (service service) Delete(id string) error {
 	_, err := service.store.GetById(id)
 	if err != nil {
-		return entities.Student{}, errors.New("student not found")
+		return errors.New("student not found")
 	}
 	return service.store.Delete(id)
 }

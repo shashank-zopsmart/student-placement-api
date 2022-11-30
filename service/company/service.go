@@ -46,10 +46,10 @@ func (service Service) Update(company entities.Company) (entities.Company, error
 }
 
 // Delete service to delete a particular company
-func (service Service) Delete(id string) (entities.Company, error) {
+func (service Service) Delete(id string) error {
 	_, err := service.store.GetByID(id)
 	if err != nil {
-		return entities.Company{}, errors.New("company not found")
+		return errors.New("company not found")
 	}
 	return service.store.Delete(id)
 }

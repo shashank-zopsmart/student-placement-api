@@ -311,22 +311,13 @@ func TestService_Update(t *testing.T) {
 // TestService_Delete test function to test Student Delete service function
 func TestService_Delete(t *testing.T) {
 	testcases := []struct {
-		id            string
-		expecError    error
-		expecResponse entities.Student
-		description   string
+		id          string
+		expecError  error
+		description string
 	}{
+		{"1", nil, "Student with that ID should be deleted"},
 		{
-			"1",
-			nil,
-			entities.Student{"1", "Test Student", "12/12/2000", "CSE",
-				"9876543210", entities.Company{ID: "1"}, "PENDING"},
-			"Student with that ID should be deleted",
-		},
-		{
-			"2",
-			errors.New("student not found"),
-			entities.Student{},
+			"2", errors.New("student not found"),
 			"Student with that ID is not present so error will be thrown",
 		},
 	}
@@ -334,12 +325,7 @@ func TestService_Delete(t *testing.T) {
 	for i := range testcases {
 		service := New(mockStudentStore{})
 
-		actualResponse, actualErr := service.Delete(testcases[i].id)
-
-		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
-		}
+		actualErr := service.Delete(testcases[i].id)
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -426,12 +412,11 @@ func (m mockStudentStore) Update(student entities.Student) (entities.Student, er
 }
 
 // Delete mock store for Delete of Student
-func (m mockStudentStore) Delete(id string) (entities.Student, error) {
+func (m mockStudentStore) Delete(id string) error {
 	if id != "1" {
-		return entities.Student{}, errors.New("student not found")
+		return errors.New("student not found")
 	}
-	return entities.Student{"1", "Test Student", "12/12/2000", "CSE", "9876543210",
-		entities.Company{ID: "1"}, "PENDING"}, nil
+	return nil
 }
 
 // GetCompany mock store for GetCompany of Student

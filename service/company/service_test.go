@@ -159,21 +159,13 @@ func TestService_Update(t *testing.T) {
 // TestService_Delete test function to test Company Delete service function
 func TestService_Delete(t *testing.T) {
 	testcases := []struct {
-		id            string
-		expecError    error
-		expecResponse entities.Company
-		description   string
+		id          string
+		expecError  error
+		description string
 	}{
+		{"1", nil, "Company with that ID should be deleted"},
 		{
-			"1",
-			nil,
-			entities.Company{"1", "Test Company", "MASS"},
-			"Company with that ID should be deleted",
-		},
-		{
-			"2",
-			errors.New("company not found"),
-			entities.Company{},
+			"2", errors.New("company not found"),
 			"Company with that ID not is present error will be thrown",
 		},
 	}
@@ -181,12 +173,7 @@ func TestService_Delete(t *testing.T) {
 	for i := range testcases {
 		service := New(mockCompanyStore{})
 
-		actualResponse, actualErr := service.Delete(testcases[i].id)
-
-		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
-			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
-				testcases[i].expecResponse, actualResponse, testcases[i].description)
-		}
+		actualErr := service.Delete(testcases[i].id)
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -230,9 +217,9 @@ func (m mockCompanyStore) Update(company entities.Company) (entities.Company, er
 }
 
 // Delete mock store for Delete of Company
-func (m mockCompanyStore) Delete(id string) (entities.Company, error) {
+func (m mockCompanyStore) Delete(id string) error {
 	if id != "1" {
-		return entities.Company{}, errors.New("company not found")
+		return errors.New("company not found")
 	}
-	return entities.Company{"1", "Test Company", "MASS"}, nil
+	return nil
 }
