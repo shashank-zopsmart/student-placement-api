@@ -38,7 +38,7 @@ func TestStore_Get(t *testing.T) {
 			[]entities.Student{
 				{
 					"1", "Test Company", "12/12/2000", "CSE", "9876543210",
-					entities.Company{ID: "1"}, "PENDING"},
+					entities.Company{}, "PENDING"},
 			},
 			[]entities.Student{
 				{
@@ -110,20 +110,21 @@ func TestStore_Get(t *testing.T) {
 			mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, "+
 				"student.phone AS phone, student.branch AS branch, company.id AS companyID, company.name AS companyName, "+
 				"company.category AS companyCategory, student.status AS status FROM student JOIN company "+
-				"ON student.companyID=company.id WHERE student.name=? AND student.branch=?").
+				"ON student.company_id=company.id WHERE student.name=? AND student.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 
 		case false:
-			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
+			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
 			if testcases[i].expErr == nil {
 				for j, _ := range testcases[i].expRes {
 					rows.AddRow(testcases[i].mockRows[j].ID, testcases[i].mockRows[j].Name, testcases[i].mockRows[j].DOB,
 						testcases[i].mockRows[j].Phone, testcases[i].mockRows[j].Branch,
-						testcases[i].mockRows[j].Company.ID, testcases[i].mockRows[j].Status)
+						testcases[i].mockRows[j].Status)
 				}
 			}
 
-			mock.ExpectQuery("SELECT * FROM student WHERE student.name=? AND student.branch=?").
+			mock.ExpectQuery("SELECT id, name, dob, phone, branch, status FROM student WHERE student.name=? "+
+				"AND student.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 		}
 
@@ -207,22 +208,12 @@ func TestStore_Create(t *testing.T) {
 				Branch: "CSE", Company: entities.Company{ID: "1"}, Status: "PENDING"},
 			nil, "Student should be created",
 		},
-		{
-			entities.Student{Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
-				Company: entities.Company{ID: "5"}, Status: "PENDING"},
-			entities.Student{ID: "1", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210",
-				Branch: "CSE", Company: entities.Company{ID: "5"}, Status: "PENDING"},
-			sql.ErrNoRows, "Company with that ID doesn't exist",
-		},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		rows := sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
-		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
-
-		mock.ExpectExec("INSERT INTO student (id, name, dob, phone, branch, companyID, status) "+
+		mock.ExpectExec("INSERT INTO student (id, name, dob, phone, branch, company_id, status) "+
 			"VALUES(?, ?, ?, ?, ?, ?, ?)").
 			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.DOB,
 				testcases[i].input.Phone, testcases[i].input.Branch, testcases[i].input.Company.ID,
@@ -259,35 +250,12 @@ func TestStore_Update(t *testing.T) {
 			nil,
 			"Student should be updated",
 		},
-		{
-			entities.Student{ID: "1", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
-				Company: entities.Company{ID: "2"}, Status: "PENDING"},
-			entities.Student{},
-			sql.ErrNoRows,
-			"Company with that ID doesn't exist",
-		},
-		{
-			entities.Student{ID: "6", Name: "Test Student", DOB: "12/12/2000", Phone: "9876543210", Branch: "CSE",
-				Company: entities.Company{ID: "1"}, Status: "PENDING"},
-			entities.Student{},
-			sql.ErrNoRows,
-			"Student with that ID doesn't exist",
-		},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
-		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE", "PENDING")
-		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
-			"student.phone AS phone, student.branch AS branch, student.status AS status FROM student WHERE student.id=?").
-			WithArgs("1").WillReturnRows(rows)
-
-		rows = sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
-		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
-
-		mock.ExpectExec("UPDATE student SET name=?, phone=?, dob=?, branch=?, companyID=?, status=? WHERE id=?").
+		mock.ExpectExec("UPDATE student SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?").
 			WithArgs(testcases[i].input.Name, testcases[i].input.Phone, testcases[i].input.DOB,
 				testcases[i].input.Branch, testcases[i].input.Company.ID, testcases[i].input.Status,
 				testcases[i].input.ID).
@@ -320,17 +288,10 @@ func TestStore_Delete(t *testing.T) {
 		desc   string
 	}{
 		{"1", nil, "Student exists so should be deleted"},
-		{"2", sql.ErrNoRows, "Student doesn't exits"},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
-
-		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
-		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE", "PENDING")
-		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
-			"student.phone AS phone, student.branch AS branch, student.status AS status FROM student WHERE student.id=?").
-			WithArgs("1").WillReturnRows(rows)
 
 		mock.ExpectExec("DELETE FROM student WHERE id=?").
 			WithArgs(testcases[i].id).

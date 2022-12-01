@@ -121,23 +121,10 @@ func TestStore_Update(t *testing.T) {
 			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
 			"Company detail should be updated",
 		},
-		{
-			entities.Company{ID: "2", Name: "Test Company 2", Category: "DREAM IT"},
-			entities.Company{}, sql.ErrNoRows,
-			"Company with that ID doesn't exist",
-		},
-		//{
-		//	entities.Company{ID: "1", Name: "Test Company", Category: "MASS"},
-		//	entities.Company{}, sql.ErrConnDone,
-		//	"Database connection closed",
-		//},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
-
-		rows := sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
-		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
 
 		mock.ExpectExec("UPDATE company SET name=?, category=? WHERE id=?").
 			WithArgs(testcases[i].input.Name, testcases[i].input.Category, testcases[i].input.ID).
@@ -170,15 +157,11 @@ func TestStore_Delete(t *testing.T) {
 		desc   string
 	}{
 		{"1", nil, "Company should be deleted"},
-		{"2", sql.ErrNoRows, "Company with that ID doesn't exist"},
-		//{"2", sql.ErrConnDone, "Database connection closed"},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		rows := sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
-		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
 		mock.ExpectExec("DELETE FROM company WHERE id=?").
 			WithArgs(testcases[i].id).
 			WillReturnResult(sqlmock.NewResult(0, 1))
