@@ -1,10 +1,13 @@
 package student
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"student-placement-api/entities"
 	"student-placement-api/service"
 )
@@ -30,8 +33,13 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 
 		if id == "" && name == "" && branch == "" && includeCompany == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			response, _ := json.Marshal(entities.ResponseMessage{"Error: Either ID or name, branch and " +
+			response, err := json.Marshal(entities.ErrorResponseMessage{"Error: Either ID or name, branch and " +
 				"includeCompany required"})
+			if err != nil {
+				w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+				return
+			}
+
 			w.Write(response)
 			return
 		}
@@ -41,8 +49,13 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 		} else {
 			if name == "" || branch == "" || includeCompany == "" {
 				w.WriteHeader(http.StatusBadRequest)
-				response, _ := json.Marshal(entities.ResponseMessage{"Error: name, company and " +
+				response, err := json.Marshal(entities.ErrorResponseMessage{"Error: name, company and " +
 					"includeCompany required"})
+				if err != nil {
+					w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+					return
+				}
+
 				w.Write(response)
 			} else {
 				handler.Get(w, req)
@@ -56,56 +69,14 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 		handler.Delete(w, req)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		response, _ := json.Marshal(entities.ResponseMessage{"Method not allowed"})
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Method not allowed"})
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.Write(response)
 	}
-}
-
-// Get handler to get all students
-func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
-	name := req.URL.Query().Get("name")
-	branch := req.URL.Query().Get("branch")
-	includeCompany := req.URL.Query().Get("includeCompany")
-
-	if includeCompany == "" {
-		includeCompany = "false"
-	}
-	includeCompanyFlag, err := strconv.ParseBool(includeCompany)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
-		w.Write(response)
-		return
-	}
-
-	result, err := handler.service.Get(name, branch, includeCompanyFlag)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(entities.ResponseMessage{"Student not found"})
-		w.Write(response)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(result)
-	w.Write(response)
-}
-
-// GetByID handler ot get student by ID
-func (handler handler) GetByID(w http.ResponseWriter, req *http.Request) {
-	id := req.URL.Query().Get("id")
-
-	result, err := handler.service.GetByID(id)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(entities.ResponseMessage{"Student not found"})
-		w.Write(response)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(result)
-	w.Write(response)
 }
 
 // Create handler to create new student
@@ -113,55 +84,186 @@ func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.Write(response)
 		return
 	}
 
 	var student entities.Student
-	json.Unmarshal(reqBody, &student)
+	err = json.Unmarshal(reqBody, &student)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
 
 	if student.Name == "" || student.DOB == "" || student.Branch == "" || student.Phone == "" ||
 		student.Company.ID == "" || student.Status == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: Name, DOB, Branch, Phone, Company.ID, " +
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: Name, DOB, Branch, Phone, Company.ID, " +
 			"Status required"})
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
 		w.Write(response)
 		return
 	}
 
 	result, err := handler.service.Create(student)
 	if err != nil {
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
 		w.Write(response)
 		return
 	}
 
+	response, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	response, _ := json.Marshal(result)
+	w.Write(response)
+}
+
+// Get handler to get all students
+func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
+	name := strings.TrimSpace(req.URL.Query().Get("name"))
+	branch := strings.TrimSpace(req.URL.Query().Get("branch"))
+	includeCompany := strings.TrimSpace(req.URL.Query().Get("includeCompany"))
+
+	if includeCompany == "" {
+		includeCompany = "false"
+	}
+
+	includeCompanyFlag, err := strconv.ParseBool(includeCompany)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
+		w.Write(response)
+		return
+	}
+
+	result, err := handler.service.Get(name, branch, includeCompanyFlag)
+	if err != nil {
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Student not found"})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(response)
+		return
+	}
+
+	response, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
+// GetByID handler ot get student by ID
+func (handler handler) GetByID(w http.ResponseWriter, req *http.Request) {
+	id := strings.TrimSpace(req.URL.Query().Get("id"))
+
+	result, err := handler.service.GetByID(id)
+	if err != nil {
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Student not found"})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(response)
+		return
+	}
+
+	response, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	w.Write(response)
 }
 
 // Update handler to update a particular student
 func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 	id := req.URL.Query().Get("id")
+	id = strings.TrimSpace(id)
+
 	if id == "" {
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: ID required"})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: ID required"})
 		w.Write(response)
 		return
 	}
 
-	reqBody, _ := io.ReadAll(req.Body)
+	reqBody, err := io.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
+
 	var student entities.Student
-	json.Unmarshal(reqBody, &student)
+
+	err = json.Unmarshal(reqBody, &student)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
 
 	if student.Name == "" || student.DOB == "" || student.Branch == "" || student.Phone == "" ||
 		student.Company.ID == "" || student.Status == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: Name, DOB, Branch, Phone, Company.ID, " +
+
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: Name, DOB, Branch, Phone, Company.ID, " +
 			"Status required"})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(response)
 		return
 	}
@@ -169,29 +271,55 @@ func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 	student.ID = id
 	result, err := handler.service.Update(student)
 	if err != nil {
-		if err.Error() == "student not found" {
+		if err == sql.ErrNoRows {
+			response, err := json.Marshal(entities.ErrorResponseMessage{"Student not found"})
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+				return
+			}
+
 			w.WriteHeader(http.StatusNotFound)
-			response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
 			w.Write(response)
 			return
 		}
+
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
 		w.Write(response)
 		return
 	}
 
+	response, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(result)
 	w.Write(response)
 }
 
 // Delete handler to delete a particular student
 func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
-	id := req.URL.Query().Get("id")
+	id := strings.TrimSpace(req.URL.Query().Get("id"))
+
 	if id == "" {
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: ID required"})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: ID required"})
 		w.Write(response)
 		return
 	}
@@ -199,13 +327,26 @@ func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 	err := handler.service.Delete(id)
 
 	if err != nil {
+
+		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: Student not found"})
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+			return
+		}
+
 		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: Student not found"})
 		w.Write(response)
 		return
 	}
 
+	response, err := json.Marshal(entities.ErrorResponseMessage{"Student Deleted"})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	response, _ := json.Marshal(entities.ResponseMessage{"Student Deleted"})
 	w.Write(response)
 }

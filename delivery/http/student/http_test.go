@@ -69,21 +69,21 @@ func TestHandler_Handler(t *testing.T) {
 				"CORE",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Error: invalid branch"},
+			entities.ErrorResponseMessage{"Error: invalid branch"},
 			http.MethodPut,
 			"Student should be updated and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ResponseMessage{"Student deleted"},
+			entities.ErrorResponseMessage{"Student deleted"},
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ResponseMessage{"Student deleted"},
+			entities.ErrorResponseMessage{"Student deleted"},
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
 		},
@@ -180,8 +180,6 @@ func TestHandler_Get(t *testing.T) {
 	}
 
 	for i := range testcases {
-		//fmt.Println(fmt.Sprintf("%v?name=%v&branch=%v&includeCompany=%v", URL,
-		//	testcases[i].body.name, testcases[i].body.branch, testcases[i].body.includeCompany))
 		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("%v?name=%v&branch=%v&includeCompany=%v", URL,
 			testcases[i].body.name, testcases[i].body.branch, testcases[i].body.includeCompany), nil)
 		w := httptest.NewRecorder()
@@ -315,7 +313,7 @@ func TestHandler_Update(t *testing.T) {
 	testcases := []struct {
 		body          entities.Student
 		expecStatus   int
-		expecResponse entities.ResponseMessage
+		expecResponse entities.ErrorResponseMessage
 		description   string
 	}{
 		{
@@ -329,7 +327,7 @@ func TestHandler_Update(t *testing.T) {
 				"CORE",
 			},
 			http.StatusOK,
-			entities.ResponseMessage{"Student Updated"},
+			entities.ErrorResponseMessage{"Student Updated"},
 			"Student should be updated and status code should be 200",
 		},
 		{
@@ -343,7 +341,7 @@ func TestHandler_Update(t *testing.T) {
 				"ACCEPTED",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Branch"},
+			entities.ErrorResponseMessage{"Invalid Branch"},
 			"Student should not be update as branch is not valid and status code should be 400",
 		},
 		{
@@ -357,7 +355,7 @@ func TestHandler_Update(t *testing.T) {
 				"REJECTED",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Phone"},
+			entities.ErrorResponseMessage{"Invalid Phone"},
 			"Student should not be update as phone no. is not valid and status code should be 400",
 		},
 		{
@@ -371,7 +369,7 @@ func TestHandler_Update(t *testing.T) {
 				"CORE",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Status"},
+			entities.ErrorResponseMessage{"Invalid Status"},
 			"Student should not be update as status is not valid and status code should be 400",
 		},
 		{
@@ -384,8 +382,8 @@ func TestHandler_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"PENDING",
 			},
-			http.StatusBadRequest,
-			entities.ResponseMessage{"No student with this ID"},
+			http.StatusNotFound,
+			entities.ErrorResponseMessage{"Student not found"},
 			"Student should not be update as no student with this id and status code should be 404",
 		},
 	}
@@ -410,19 +408,19 @@ func TestHandler_Delete(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecStatus   int
-		expecResponse entities.ResponseMessage
+		expecResponse entities.ErrorResponseMessage
 		description   string
 	}{
 		{
 			"1",
 			http.StatusOK,
-			entities.ResponseMessage{"Student deleted"},
+			entities.ErrorResponseMessage{"Student deleted"},
 			"Student with that ID should be deleted and status code should be 200",
 		},
 		{
 			"2",
 			http.StatusNotFound,
-			entities.ResponseMessage{"No student with that ID"},
+			entities.ErrorResponseMessage{"No student with that ID"},
 			"Student with that ID is present so a company should be returned and status code should be 200",
 		},
 	}

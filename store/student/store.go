@@ -89,8 +89,8 @@ func (store store) Get(name string, branch string, includeCompany bool) ([]entit
 // Update store to update a particular student
 func (store store) Update(student entities.Student) (entities.Student, error) {
 	query := "UPDATE student SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?"
-	_, err := store.db.Exec(query, student.Name, student.Phone, student.DOB, student.Branch, student.Company.ID, student.Status,
-		student.ID)
+	_, err := store.db.Exec(query, student.Name, student.Phone, student.DOB, student.Branch, student.Company.ID,
+		student.Status, student.ID)
 
 	if err != nil {
 		return entities.Student{}, err

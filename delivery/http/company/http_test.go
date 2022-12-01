@@ -46,14 +46,14 @@ func TestHandler_Handler(t *testing.T) {
 				"MASS",
 			},
 			http.StatusOK,
-			entities.ResponseMessage{"Company Updated"},
+			entities.ErrorResponseMessage{"Company Updated"},
 			http.MethodPut,
 			"Company should be updated and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ResponseMessage{"Company deleted"},
+			entities.ErrorResponseMessage{"Company deleted"},
 			http.MethodDelete,
 			"Company with that ID should be deleted and status code should be 200",
 		},
@@ -157,7 +157,7 @@ func TestHandler_Create(t *testing.T) {
 				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Error: Name and Category required"},
+			entities.ErrorResponseMessage{"Error: Name and Category required"},
 			"Company should not be created as both parameters are mandatory is not valid and status code " +
 				"should be 400",
 		},
@@ -183,7 +183,7 @@ func TestHandler_Update(t *testing.T) {
 	testcases := []struct {
 		body          entities.Company
 		expecStatus   int
-		expecResponse entities.ResponseMessage
+		expecResponse entities.ErrorResponseMessage
 		description   string
 	}{
 		{
@@ -193,7 +193,7 @@ func TestHandler_Update(t *testing.T) {
 				"MASS",
 			},
 			http.StatusOK,
-			entities.ResponseMessage{"Company Updated"},
+			entities.ErrorResponseMessage{"Company Updated"},
 			"Company should be updated and status code should be 200",
 		},
 		{
@@ -202,7 +202,7 @@ func TestHandler_Update(t *testing.T) {
 				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Error: Name and Category required"},
+			entities.ErrorResponseMessage{"Error: Name and Category required"},
 			"Company should not be update as category is missing and status code should be 400",
 		},
 		{
@@ -211,7 +211,7 @@ func TestHandler_Update(t *testing.T) {
 				Category: "MASS",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Error: ID required"},
+			entities.ErrorResponseMessage{"Error: ID required"},
 			"Company should not be update as id is missing and status code should be 400",
 		},
 	}
@@ -236,25 +236,25 @@ func TestHandler_Delete(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecStatus   int
-		expecResponse entities.ResponseMessage
+		expecResponse entities.ErrorResponseMessage
 		description   string
 	}{
 		{
 			"1",
 			http.StatusOK,
-			entities.ResponseMessage{"Company deleted"},
+			entities.ErrorResponseMessage{"Company deleted"},
 			"Company with that ID should be deleted and status code should be 200",
 		},
 		{
 			"2",
 			http.StatusNotFound,
-			entities.ResponseMessage{"Error: Company not found"},
+			entities.ErrorResponseMessage{"Error: Company not found"},
 			"Company with that ID is present so a company should be returned and status code should be 200",
 		},
 		{
 			"",
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Error: ID required"},
+			entities.ErrorResponseMessage{"Error: ID required"},
 			"Id should be passed in the query paramenter and status code should be 200",
 		},
 	}
