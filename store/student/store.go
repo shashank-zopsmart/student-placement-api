@@ -46,7 +46,7 @@ func (store store) Get(name string, branch string, includeCompany bool) ([]entit
 		query := "SELECT student.id AS id, student.name AS name, student.dob AS dob, student.phone AS phone, " +
 			"student.branch AS branch, company.id AS companyID, company.name AS companyName, " +
 			"company.category AS companyCategory, student.status AS status FROM student JOIN company ON " +
-			"student.id=company.id WHERE student.name=? AND student.branch=?"
+			"student.companyID=company.id WHERE student.name=? AND student.branch=?"
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
