@@ -119,6 +119,7 @@ func (store store) Update(student entities.Student) (entities.Student, error) {
 	query := "UPDATE student SET name=?, phone=?, dob=?, branch=?, companyID=?, status=? WHERE id=?"
 	_, err := store.db.Exec(query, student.Name, student.Phone, student.DOB, student.Branch, student.Company.ID, student.Status,
 		student.ID)
+
 	if err != nil {
 		return entities.Student{}, err
 	}

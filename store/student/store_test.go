@@ -110,7 +110,7 @@ func TestStore_Get(t *testing.T) {
 			mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, "+
 				"student.phone AS phone, student.branch AS branch, company.id AS companyID, company.name AS companyName, "+
 				"company.category AS companyCategory, student.status AS status FROM student JOIN company "+
-				"ON student.id=company.id WHERE student.name=? AND student.branch=?").
+				"ON student.companyID=company.id WHERE student.name=? AND student.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 
 		case false:
@@ -156,22 +156,21 @@ func TestStore_GetById(t *testing.T) {
 		desc   string
 	}{
 		{"1", entities.Student{"1", "Test Student", "12/12/2000", "CSE",
-			"9876543210", entities.Company{ID: "1"}, "PENDING"}, nil, "Student with that ID exists"},
+			"9876543210", entities.Company{}, "PENDING"}, nil, "Student with that ID exists"},
 		{"2", entities.Student{}, sql.ErrNoRows, "Student with that ID doesn't exist"},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
+		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
 		if testcases[i].expErr == nil {
 			rows.AddRow(testcases[i].expRes.ID, testcases[i].expRes.Name, testcases[i].expRes.DOB,
-				testcases[i].expRes.Phone, testcases[i].expRes.Branch, testcases[i].expRes.Company.ID,
-				testcases[i].expRes.Status)
+				testcases[i].expRes.Phone, testcases[i].expRes.Branch, testcases[i].expRes.Status)
 		}
 		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
-			"student.phone AS phone, student.branch AS branch, company.id AS companyID, student.status AS status " +
-			"FROM student JOIN company ON student.id=company.id WHERE student.id=?").WithArgs(testcases[i].id).
+			"student.phone AS phone, student.branch AS branch, student.status AS status " +
+			"FROM student WHERE student.id=?").WithArgs(testcases[i].id).
 			WillReturnRows(rows)
 
 		actualRes, actualErr := store.GetById(testcases[i].id)
@@ -279,18 +278,16 @@ func TestStore_Update(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
-		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE",
-			"1", "PENDING")
+		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
+		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE", "PENDING")
 		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
-			"student.phone AS phone, student.branch AS branch, company.id AS companyID, student.status AS status " +
-			"FROM student JOIN company ON student.id=company.id WHERE student.id=?").WithArgs("1").
-			WillReturnRows(rows)
+			"student.phone AS phone, student.branch AS branch, student.status AS status FROM student WHERE student.id=?").
+			WithArgs("1").WillReturnRows(rows)
 
 		rows = sqlmock.NewRows([]string{"id", "name", "category"}).AddRow("1", "Test Company", "MASS")
 		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs("1").WillReturnRows(rows)
 
-		mock.ExpectExec("UPDATE student SET name=?, phone=?, dob=?, branch=?, company=?, status=? WHERE id=?").
+		mock.ExpectExec("UPDATE student SET name=?, phone=?, dob=?, branch=?, companyID=?, status=? WHERE id=?").
 			WithArgs(testcases[i].input.Name, testcases[i].input.Phone, testcases[i].input.DOB,
 				testcases[i].input.Branch, testcases[i].input.Company.ID, testcases[i].input.Status,
 				testcases[i].input.ID).
@@ -329,13 +326,11 @@ func TestStore_Delete(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "status"})
-		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE",
-			"1", "PENDING")
+		rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
+		rows.AddRow("1", "Test Student", "12/12/2000", "9876543210", "CSE", "PENDING")
 		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
-			"student.phone AS phone, student.branch AS branch, company.id AS companyID, student.status AS status " +
-			"FROM student JOIN company ON student.id=company.id WHERE student.id=?").WithArgs("1").
-			WillReturnRows(rows)
+			"student.phone AS phone, student.branch AS branch, student.status AS status FROM student WHERE student.id=?").
+			WithArgs("1").WillReturnRows(rows)
 
 		mock.ExpectExec("DELETE FROM student WHERE id=?").
 			WithArgs(testcases[i].id).
