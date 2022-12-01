@@ -185,14 +185,6 @@ func TestService_Delete(t *testing.T) {
 
 type mockCompanyStore struct{}
 
-// GetByID mock store for GetByID for Company
-func (m mockCompanyStore) GetByID(id string) (entities.Company, error) {
-	if id != "1" {
-		return entities.Company{}, sql.ErrNoRows
-	}
-	return entities.Company{"1", "Test Company", "MASS"}, nil
-}
-
 // Create mock store for Create of Company
 func (m mockCompanyStore) Create(company entities.Company) (entities.Company, error) {
 	switch company.Category {
@@ -201,6 +193,14 @@ func (m mockCompanyStore) Create(company entities.Company) (entities.Company, er
 	default:
 		return entities.Company{}, errors.New("invalid category")
 	}
+}
+
+// GetByID mock store for GetByID for Company
+func (m mockCompanyStore) GetByID(id string) (entities.Company, error) {
+	if id != "1" {
+		return entities.Company{}, sql.ErrNoRows
+	}
+	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
 
 // Update mock store for Update of Company

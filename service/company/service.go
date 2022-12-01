@@ -15,11 +15,6 @@ func New(store store.Company) service {
 	return service{store: store}
 }
 
-// GetByID service to get a company by ID
-func (service service) GetByID(id string) (entities.Company, error) {
-	return service.store.GetByID(id)
-}
-
 // Create service to create a new company
 func (service service) Create(company entities.Company) (entities.Company, error) {
 	switch company.Category {
@@ -28,6 +23,11 @@ func (service service) Create(company entities.Company) (entities.Company, error
 	default:
 		return entities.Company{}, errors.New("invalid category")
 	}
+}
+
+// GetByID service to get a company by ID
+func (service service) GetByID(id string) (entities.Company, error) {
+	return service.store.GetByID(id)
 }
 
 // Update service to update a particular company

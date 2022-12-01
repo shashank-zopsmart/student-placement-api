@@ -2,10 +2,13 @@ package student
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+	"strings"
 	"student-placement-api/entities"
 	"student-placement-api/store"
 	"time"
+	"unicode"
 )
 
 type service struct {
@@ -17,20 +20,10 @@ func New(store store.Student) service {
 	return service{store: store}
 }
 
-// Get service to get all student or search student by name and branch
-func (service service) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
-	return service.store.Get(name, branch, includeCompany)
-}
-
-// GetByID service to get a student by ID
-func (service service) GetByID(id string) (entities.Student, error) {
-	return service.store.GetById(id)
-}
-
 // Create to create a new student
 func (service service) Create(student entities.Student) (entities.Student, error) {
 	if len(student.Name) < 3 {
-		return entities.Student{}, errors.New("invalid name")
+		return entities.Student{}, errors.New("invalid name, it must of minimum 3 characters")
 	}
 
 	if ageValidate, err := validateAge(student.DOB, 22); err != nil {
@@ -40,6 +33,10 @@ func (service service) Create(student entities.Student) (entities.Student, error
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
+		return entities.Student{}, errors.New("invalid phone, must be of 10-12 digits")
+	}
+
+	if validatePhone(student.Phone) == false {
 		return entities.Student{}, errors.New("invalid phone")
 	}
 
@@ -53,9 +50,8 @@ func (service service) Create(student entities.Student) (entities.Student, error
 	}
 
 	var company, err = service.store.GetCompany(student.Company.ID)
-
 	if err != nil {
-		return entities.Student{}, err
+		return entities.Student{}, errors.New(fmt.Sprintf("Company not found %v", err))
 	}
 
 	if company.Category == "DREAM IT" && !(student.Branch == "CSE" || student.Branch == "ISE") {
@@ -74,6 +70,16 @@ func (service service) Create(student entities.Student) (entities.Student, error
 	return service.store.Create(student)
 }
 
+// Get service to get all student or search student by name and branch
+func (service service) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
+	return service.store.Get(name, branch, includeCompany)
+}
+
+// GetByID service to get a student by ID
+func (service service) GetByID(id string) (entities.Student, error) {
+	return service.store.GetById(id)
+}
+
 // Update service to update a particular student
 func (service service) Update(student entities.Student) (entities.Student, error) {
 	_, err := service.store.GetById(student.ID)
@@ -82,7 +88,7 @@ func (service service) Update(student entities.Student) (entities.Student, error
 	}
 
 	if len(student.Name) < 3 {
-		return entities.Student{}, errors.New("invalid name")
+		return entities.Student{}, errors.New("invalid name, it must of minimum 3 characters")
 	}
 
 	if ageValidate, err := validateAge(student.DOB, 22); err != nil {
@@ -92,6 +98,10 @@ func (service service) Update(student entities.Student) (entities.Student, error
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
+		return entities.Student{}, errors.New("invalid phone, must be of 10-12 digits")
+	}
+
+	if validatePhone(student.Phone) == false {
 		return entities.Student{}, errors.New("invalid phone")
 	}
 
@@ -137,7 +147,9 @@ func (service service) Delete(id string) error {
 
 func validateAge(dob string, minAge int) (bool, error) {
 	year := time.Now().Year()
-	yob, err := strconv.Atoi(string(dob[6:]))
+	dob = strings.TrimSpace(dob)
+
+	yob, err := strconv.Atoi(string(dob[len(dob)-4:]))
 	if err != nil {
 		return false, err
 	}
@@ -146,4 +158,13 @@ func validateAge(dob string, minAge int) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func validatePhone(phone string) bool {
+	for _, char := range phone {
+		if !unicode.IsNumber(char) {
+			return false
+		}
+	}
+	return true
 }
