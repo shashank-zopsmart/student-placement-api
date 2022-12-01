@@ -41,7 +41,7 @@ func TestStore_GetByID(t *testing.T) {
 			rows.AddRow(testcases[i].expRes.ID, testcases[i].expRes.Name, testcases[i].expRes.Category)
 		}
 
-		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
+		mock.ExpectQuery("SELECT * FROM companies WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
 
 		actualRes, actualErr := store.GetByID(testcases[i].id)
 
@@ -75,17 +75,12 @@ func TestStore_Create(t *testing.T) {
 			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
 			"Company should be inserted",
 		},
-		//{
-		//	entities.Company{Name: "Test Company", Category: "OPEN DREAM"},
-		//	entities.Company{ID: "1", Name: "Test Company", Category: "OPEN DREAM"}, sql.ErrConnDone,
-		//	"Database connection closed",
-		//},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("INSERT INTO company (id, name, category) VALUES(?, ?, ?)").
+		mock.ExpectExec("INSERT INTO companies (id, name, category) VALUES(?, ?, ?)").
 			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.Category).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -126,7 +121,7 @@ func TestStore_Update(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("UPDATE company SET name=?, category=? WHERE id=?").
+		mock.ExpectExec("UPDATE companies SET name=?, category=? WHERE id=?").
 			WithArgs(testcases[i].input.Name, testcases[i].input.Category, testcases[i].input.ID).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -162,7 +157,7 @@ func TestStore_Delete(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("DELETE FROM company WHERE id=?").
+		mock.ExpectExec("DELETE FROM companies WHERE id=?").
 			WithArgs(testcases[i].id).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 

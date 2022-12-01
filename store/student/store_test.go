@@ -107,10 +107,10 @@ func TestStore_Get(t *testing.T) {
 				}
 			}
 
-			mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, "+
-				"student.phone AS phone, student.branch AS branch, company.id AS companyID, company.name AS companyName, "+
-				"company.category AS companyCategory, student.status AS status FROM student JOIN company "+
-				"ON student.company_id=company.id WHERE student.name=? AND student.branch=?").
+			mock.ExpectQuery("SELECT students.id AS id, students.name AS name, students.dob AS dob, "+
+				"students.phone AS phone, students.branch AS branch, companies.id AS companyID, companies.name AS companyName, "+
+				"companies.category AS companyCategory, students.status AS status FROM students JOIN companies "+
+				"ON students.company_id=companies.id WHERE students.name=? AND students.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 
 		case false:
@@ -123,8 +123,8 @@ func TestStore_Get(t *testing.T) {
 				}
 			}
 
-			mock.ExpectQuery("SELECT id, name, dob, phone, branch, status FROM student WHERE student.name=? "+
-				"AND student.branch=?").
+			mock.ExpectQuery("SELECT id, name, dob, phone, branch, status FROM students WHERE students.name=? "+
+				"AND students.branch=?").
 				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 		}
 
@@ -169,9 +169,9 @@ func TestStore_GetById(t *testing.T) {
 			rows.AddRow(testcases[i].expRes.ID, testcases[i].expRes.Name, testcases[i].expRes.DOB,
 				testcases[i].expRes.Phone, testcases[i].expRes.Branch, testcases[i].expRes.Status)
 		}
-		mock.ExpectQuery("SELECT student.id AS id, student.name AS name, student.dob AS dob, " +
-			"student.phone AS phone, student.branch AS branch, student.status AS status " +
-			"FROM student WHERE student.id=?").WithArgs(testcases[i].id).
+		mock.ExpectQuery("SELECT students.id AS id, students.name AS name, students.dob AS dob, " +
+			"students.phone AS phone, students.branch AS branch, students.status AS status " +
+			"FROM students WHERE students.id=?").WithArgs(testcases[i].id).
 			WillReturnRows(rows)
 
 		actualRes, actualErr := store.GetById(testcases[i].id)
@@ -213,7 +213,7 @@ func TestStore_Create(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("INSERT INTO student (id, name, dob, phone, branch, company_id, status) "+
+		mock.ExpectExec("INSERT INTO students (id, name, dob, phone, branch, company_id, status) "+
 			"VALUES(?, ?, ?, ?, ?, ?, ?)").
 			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.DOB,
 				testcases[i].input.Phone, testcases[i].input.Branch, testcases[i].input.Company.ID,
@@ -255,7 +255,7 @@ func TestStore_Update(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("UPDATE student SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?").
+		mock.ExpectExec("UPDATE students SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?").
 			WithArgs(testcases[i].input.Name, testcases[i].input.Phone, testcases[i].input.DOB,
 				testcases[i].input.Branch, testcases[i].input.Company.ID, testcases[i].input.Status,
 				testcases[i].input.ID).
@@ -293,7 +293,7 @@ func TestStore_Delete(t *testing.T) {
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("DELETE FROM student WHERE id=?").
+		mock.ExpectExec("DELETE FROM students WHERE id=?").
 			WithArgs(testcases[i].id).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -332,7 +332,7 @@ func TestStore_GetCompany(t *testing.T) {
 		if testcases[i].expErr == nil {
 			rows.AddRow(testcases[i].expRes.ID, testcases[i].expRes.Name, testcases[i].expRes.Category)
 		}
-		mock.ExpectQuery("SELECT * FROM company WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
+		mock.ExpectQuery("SELECT * FROM companies WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
 
 		actualRes, actualErr := store.GetCompany(testcases[i].id)
 

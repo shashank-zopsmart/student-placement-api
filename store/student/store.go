@@ -18,7 +18,7 @@ func New(db *sql.DB) store {
 // Create store to create a new student
 func (store store) Create(student entities.Student) (entities.Student, error) {
 	student.ID = uuid.NewString()
-	query := "INSERT INTO student (id, name, dob, phone, branch, company_id, status) VALUES(?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO students (id, name, dob, phone, branch, company_id, status) VALUES(?, ?, ?, ?, ?, ?, ?)"
 	_, err := store.db.Exec(query, student.ID, student.Name, student.DOB, student.Phone, student.Branch,
 		student.Company.ID, student.Status)
 	if err != nil {
@@ -29,8 +29,8 @@ func (store store) Create(student entities.Student) (entities.Student, error) {
 
 // GetById store to get a student by ID
 func (store store) GetById(id string) (entities.Student, error) {
-	query := "SELECT student.id AS id, student.name AS name, student.dob AS dob, student.phone AS phone, " +
-		"student.branch AS branch, student.status AS status FROM student WHERE student.id=?"
+	query := "SELECT students.id AS id, students.name AS name, students.dob AS dob, students.phone AS phone, " +
+		"students.branch AS branch, students.status AS status FROM students WHERE students.id=?"
 	row := store.db.QueryRow(query, id)
 	var student entities.Student
 
@@ -47,10 +47,10 @@ func (store store) Get(name string, branch string, includeCompany bool) ([]entit
 	var students = make([]entities.Student, 0)
 
 	if includeCompany == true {
-		query := "SELECT student.id AS id, student.name AS name, student.dob AS dob, student.phone AS phone, " +
-			"student.branch AS branch, company.id AS companyID, company.name AS companyName, " +
-			"company.category AS companyCategory, student.status AS status FROM student JOIN company ON " +
-			"student.company_id=company.id WHERE student.name=? AND student.branch=?"
+		query := "SELECT students.id AS id, students.name AS name, students.dob AS dob, students.phone AS phone, " +
+			"students.branch AS branch, companies.id AS companyID, companies.name AS companyName, " +
+			"companies.category AS companyCategory, students.status AS status FROM students JOIN companies ON " +
+			"students.company_id=companies.id WHERE students.name=? AND students.branch=?"
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
@@ -64,7 +64,7 @@ func (store store) Get(name string, branch string, includeCompany bool) ([]entit
 			students = append(students, student)
 		}
 	} else {
-		query := "SELECT id, name, dob, phone, branch, status FROM student WHERE student.name=? AND student.branch=?"
+		query := "SELECT id, name, dob, phone, branch, status FROM students WHERE students.name=? AND students.branch=?"
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
@@ -88,7 +88,7 @@ func (store store) Get(name string, branch string, includeCompany bool) ([]entit
 
 // Update store to update a particular student
 func (store store) Update(student entities.Student) (entities.Student, error) {
-	query := "UPDATE student SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?"
+	query := "UPDATE students SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?"
 	_, err := store.db.Exec(query, student.Name, student.Phone, student.DOB, student.Branch, student.Company.ID,
 		student.Status, student.ID)
 
@@ -100,7 +100,7 @@ func (store store) Update(student entities.Student) (entities.Student, error) {
 
 // Delete store to delete a particular student
 func (store store) Delete(id string) error {
-	query := "DELETE FROM student WHERE id=?"
+	query := "DELETE FROM students WHERE id=?"
 	_, err := store.db.Exec(query, id)
 	if err != nil {
 		return err
@@ -110,7 +110,7 @@ func (store store) Delete(id string) error {
 
 // GetCompany store to get company's detail a particular company id
 func (store store) GetCompany(id string) (entities.Company, error) {
-	query := "SELECT * FROM company WHERE id=?"
+	query := "SELECT * FROM companies WHERE id=?"
 
 	var company entities.Company
 	row := store.db.QueryRow(query, id)
