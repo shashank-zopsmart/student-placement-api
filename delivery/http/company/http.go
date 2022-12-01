@@ -2,7 +2,8 @@ package company
 
 import (
 	"encoding/json"
-	"fmt"
+	"student-placement-api/errors"
+
 	"io"
 	"net/http"
 	"strings"
@@ -32,45 +33,55 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 	case http.MethodDelete:
 		handler.Delete(w, req)
 	default:
+		err := errors.HttpErrors{"Method not allowed"}
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte(fmt.Sprintf("Method not allowed")))
+		w.Write([]byte(err.Error()))
 	}
 }
 
 // Create handler to create a new company
 func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		err := errors.InvalidParams{"Invalid request body"}
+		w.Write([]byte(err.Error()))
 		return
 	}
+
 	var company entities.Company
 
 	err = json.Unmarshal(reqBody, &company)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.WriteHeader(http.StatusBadRequest)
+		err := errors.InvalidParams{"Invalid request body"}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	if company.Name == "" || company.Category == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("Error: Name and Category required")))
+		err := errors.MissisngParam{[]string{"ID", "Category"}}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	result, err := handler.service.Create(company)
+	result, err := handler.service.Create(ctx, company)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		switch err.(type) {
+		case errors.ConnDone, errors.InvalidParams:
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	response, err := json.Marshal(result)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -80,40 +91,29 @@ func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 
 // Get handler to get company detail by ID
 func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
 	id := req.URL.Query().Get("id")
 	id = strings.TrimSpace(id)
-
 	if id == "" {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"id param not present"})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
-		}
-
+		err := errors.MissisngParam{Params: []string{"id"}}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	result, err := handler.service.GetByID(id)
+	result, err := handler.service.GetByID(ctx, id)
 	if err != nil {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"Company not found"})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
-		}
-
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(response)
+		err := errors.EntityNotFound{Entity: "Company"}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	response, err := json.Marshal(result)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -123,69 +123,59 @@ func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 
 // Update handler to update a particular company
 func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
 	id := req.URL.Query().Get("id")
 	id = strings.TrimSpace(id)
 
 	if id == "" {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: ID required"})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
-		}
-
+		err := errors.MissisngParam{Params: []string{"id"}}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.WriteHeader(http.StatusBadRequest)
+		err := errors.InvalidParams{"Invalid request body"}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	var company entities.Company
 	err = json.Unmarshal(reqBody, &company)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.WriteHeader(http.StatusBadRequest)
+		err := errors.InvalidParams{"Invalid request body"}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	if company.Name == "" || company.Category == "" {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: Name and Category required"})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
-		}
-
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		err := errors.MissisngParam{[]string{"ID", "Category"}}
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	company.ID = id
-	result, err := handler.service.Update(company)
+	result, err := handler.service.Update(ctx, company)
 	if err != nil {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
+		switch err.(type) {
+		case errors.ConnDone, errors.InvalidParams:
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.EntityNotFound:
+			w.WriteHeader(http.StatusNotFound)
 		}
-
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	response, err := json.Marshal(result)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.Write([]byte(err.Error()))
 		return
 	}
 
@@ -195,40 +185,34 @@ func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 
 // Delete handler to delete a particular company
 func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
 	id := req.URL.Query().Get("id")
 	id = strings.TrimSpace(id)
 
 	if id == "" {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: ID required"})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
-		}
-
+		err := errors.MissisngParam{Params: []string{"id"}}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	err := handler.service.Delete(id)
+	err := handler.service.Delete(ctx, id)
 	if err != nil {
-		response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("Error: %v", err)))
-			return
+		switch err.(type) {
+		case errors.ConnDone, errors.InvalidParams:
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.EntityNotFound:
+			w.WriteHeader(http.StatusNotFound)
 		}
-
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(response)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
-	response, err := json.Marshal(entities.ErrorResponseMessage{"Company Deleted"})
+	response, err := json.Marshal(entities.ResponseMessage{"Company Deleted"})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+		w.Write([]byte(err.Error()))
 		return
 	}
 
