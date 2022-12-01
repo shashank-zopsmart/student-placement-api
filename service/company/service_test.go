@@ -1,6 +1,7 @@
 package company
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"reflect"
@@ -33,7 +34,7 @@ func TestService_GetByID(t *testing.T) {
 	for i := range testcases {
 		service := New(mockCompanyStore{})
 
-		actualResponse, actualErr := service.GetByID(testcases[i].id)
+		actualResponse, actualErr := service.GetByID(context.Background(), testcases[i].id)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -82,7 +83,7 @@ func TestService_Create(t *testing.T) {
 	for i := range testcases {
 		service := New(mockCompanyStore{})
 
-		actualResponse, actualErr := service.Create(testcases[i].body)
+		actualResponse, actualErr := service.Create(context.Background(), testcases[i].body)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -143,7 +144,7 @@ func TestService_Update(t *testing.T) {
 	for i := range testcases {
 		service := New(mockCompanyStore{})
 
-		actualResponse, actualErr := service.Update(testcases[i].body)
+		actualResponse, actualErr := service.Update(context.Background(), testcases[i].body)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -174,7 +175,7 @@ func TestService_Delete(t *testing.T) {
 	for i := range testcases {
 		service := New(mockCompanyStore{})
 
-		actualErr := service.Delete(testcases[i].id)
+		actualErr := service.Delete(context.Background(), testcases[i].id)
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -186,7 +187,7 @@ func TestService_Delete(t *testing.T) {
 type mockCompanyStore struct{}
 
 // Create mock store for Create of Company
-func (m mockCompanyStore) Create(company entities.Company) (entities.Company, error) {
+func (m mockCompanyStore) Create(ctx context.Context, company entities.Company) (entities.Company, error) {
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return entities.Company{"1", "Test Company", "MASS"}, nil
@@ -196,7 +197,7 @@ func (m mockCompanyStore) Create(company entities.Company) (entities.Company, er
 }
 
 // GetByID mock store for GetByID for Company
-func (m mockCompanyStore) GetByID(id string) (entities.Company, error) {
+func (m mockCompanyStore) GetByID(ctx context.Context, id string) (entities.Company, error) {
 	if id != "1" {
 		return entities.Company{}, sql.ErrNoRows
 	}
@@ -204,7 +205,7 @@ func (m mockCompanyStore) GetByID(id string) (entities.Company, error) {
 }
 
 // Update mock store for Update of Company
-func (m mockCompanyStore) Update(company entities.Company) (entities.Company, error) {
+func (m mockCompanyStore) Update(ctx context.Context, company entities.Company) (entities.Company, error) {
 	if company.ID != "1" {
 		return entities.Company{}, sql.ErrNoRows
 	}
@@ -218,7 +219,7 @@ func (m mockCompanyStore) Update(company entities.Company) (entities.Company, er
 }
 
 // Delete mock store for Delete of Company
-func (m mockCompanyStore) Delete(id string) error {
+func (m mockCompanyStore) Delete(ctx context.Context, id string) error {
 	if id != "1" {
 		return sql.ErrNoRows
 	}

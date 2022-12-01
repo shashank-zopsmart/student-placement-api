@@ -1,6 +1,7 @@
 package student
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -21,7 +22,7 @@ func New(store store.Student) service {
 }
 
 // Create to create a new student
-func (service service) Create(student entities.Student) (entities.Student, error) {
+func (service service) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if len(student.Name) < 3 {
 		return entities.Student{}, errors.New("invalid name, it must of minimum 3 characters")
 	}
@@ -49,7 +50,7 @@ func (service service) Create(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("invalid branch")
 	}
 
-	var company, err = service.store.GetCompany(student.Company.ID)
+	var company, err = service.store.GetCompany(ctx, student.Company.ID)
 	if err != nil {
 		return entities.Student{}, errors.New(fmt.Sprintf("Company not found %v", err))
 	}
@@ -67,22 +68,22 @@ func (service service) Create(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("branch not allowed in this company")
 	}
 
-	return service.store.Create(student)
+	return service.store.Create(ctx, student)
 }
 
 // Get service to get all student or search student by name and branch
-func (service service) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
-	return service.store.Get(name, branch, includeCompany)
+func (service service) Get(ctx context.Context, name string, branch string, includeCompany bool) ([]entities.Student, error) {
+	return service.store.Get(ctx, name, branch, includeCompany)
 }
 
 // GetByID service to get a student by ID
-func (service service) GetByID(id string) (entities.Student, error) {
-	return service.store.GetById(id)
+func (service service) GetByID(ctx context.Context, id string) (entities.Student, error) {
+	return service.store.GetById(ctx, id)
 }
 
 // Update service to update a particular student
-func (service service) Update(student entities.Student) (entities.Student, error) {
-	_, err := service.store.GetById(student.ID)
+func (service service) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
+	_, err := service.store.GetById(ctx, student.ID)
 	if err != nil {
 		return entities.Student{}, err
 	}
@@ -114,7 +115,7 @@ func (service service) Update(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("invalid branch")
 	}
 
-	company, err := service.store.GetCompany(student.Company.ID)
+	company, err := service.store.GetCompany(ctx, student.Company.ID)
 
 	if err != nil {
 		return entities.Student{}, err
@@ -133,16 +134,16 @@ func (service service) Update(student entities.Student) (entities.Student, error
 		return entities.Student{}, errors.New("branch not allowed in this company")
 	}
 
-	return service.store.Update(student)
+	return service.store.Update(ctx, student)
 }
 
 // Delete service to delete a particular student
-func (service service) Delete(id string) error {
-	_, err := service.store.GetById(id)
+func (service service) Delete(ctx context.Context, id string) error {
+	_, err := service.store.GetById(ctx, id)
 	if err != nil {
 		return err
 	}
-	return service.store.Delete(id)
+	return service.store.Delete(ctx, id)
 }
 
 func validateAge(dob string, minAge int) (bool, error) {

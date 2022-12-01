@@ -1,19 +1,22 @@
 package store
 
-import "student-placement-api/entities"
+import (
+	"context"
+	"student-placement-api/entities"
+)
 
 type Company interface {
-	GetByID(id string) (entities.Company, error)
-	Create(company entities.Company) (entities.Company, error)
-	Update(company entities.Company) (entities.Company, error)
-	Delete(id string) error
+	GetByID(ctx context.Context, id string) (entities.Company, error)
+	Create(ctx context.Context, company entities.Company) (entities.Company, error)
+	Update(ctx context.Context, company entities.Company) (entities.Company, error)
+	Delete(ctx context.Context, id string) error
 }
 
 type Student interface {
-	Get(name string, branch string, includeCompany bool) ([]entities.Student, error)
-	GetById(id string) (entities.Student, error)
-	Create(student entities.Student) (entities.Student, error)
-	Update(student entities.Student) (entities.Student, error)
-	Delete(id string) error
-	GetCompany(id string) (entities.Company, error)
+	Get(ctx context.Context, name string, branch string, includeCompany bool) ([]entities.Student, error)
+	GetById(ctx context.Context, id string) (entities.Student, error)
+	Create(ctx context.Context, student entities.Student) (entities.Student, error)
+	Update(ctx context.Context, student entities.Student) (entities.Student, error)
+	Delete(ctx context.Context, id string) error
+	GetCompany(ctx context.Context, id string) (entities.Company, error)
 }

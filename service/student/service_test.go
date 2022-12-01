@@ -1,6 +1,7 @@
 package student
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -63,7 +64,7 @@ func TestService_Get(t *testing.T) {
 	for i := range testcases {
 		service := New(mockStudentStore{})
 
-		actualResponse, actualErr := service.Get(testcases[i].name, testcases[i].branch, testcases[i].includeCompany)
+		actualResponse, actualErr := service.Get(context.Background(), testcases[i].name, testcases[i].branch, testcases[i].includeCompany)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -103,7 +104,7 @@ func TestService_GetByID(t *testing.T) {
 	for i := range testcases {
 		service := New(mockStudentStore{})
 
-		actualResponse, actualErr := service.GetByID(testcases[i].id)
+		actualResponse, actualErr := service.GetByID(context.Background(), testcases[i].id)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -203,7 +204,7 @@ func TestService_Create(t *testing.T) {
 	for i := range testcases {
 		service := New(mockStudentStore{})
 
-		actualResponse, actualErr := service.Create(testcases[i].body)
+		actualResponse, actualErr := service.Create(context.Background(), testcases[i].body)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -335,7 +336,7 @@ func TestService_Update(t *testing.T) {
 	for i := range testcases {
 		service := New(mockStudentStore{})
 
-		actualResponse, actualErr := service.Update(testcases[i].body)
+		actualResponse, actualErr := service.Update(context.Background(), testcases[i].body)
 
 		if !reflect.DeepEqual(actualResponse, testcases[i].expecResponse) {
 			fmt.Println(actualErr)
@@ -367,7 +368,7 @@ func TestService_Delete(t *testing.T) {
 	for i := range testcases {
 		service := New(mockStudentStore{})
 
-		actualErr := service.Delete(testcases[i].id)
+		actualErr := service.Delete(context.Background(), testcases[i].id)
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expecError) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1,
@@ -379,7 +380,7 @@ func TestService_Delete(t *testing.T) {
 type mockStudentStore struct{}
 
 // Get mock store for Get for Student
-func (m mockStudentStore) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
+func (m mockStudentStore) Get(ctx context.Context, name string, branch string, includeCompany bool) ([]entities.Student, error) {
 	if name == "Student" && branch == "CSE" {
 		if includeCompany == true {
 			return []entities.Student{
@@ -396,7 +397,7 @@ func (m mockStudentStore) Get(name string, branch string, includeCompany bool) (
 }
 
 // GetById mock store for GetById for Student
-func (m mockStudentStore) GetById(id string) (entities.Student, error) {
+func (m mockStudentStore) GetById(ctx context.Context, id string) (entities.Student, error) {
 	if id != "1" {
 		return entities.Student{}, sql.ErrNoRows
 	}
@@ -405,7 +406,7 @@ func (m mockStudentStore) GetById(id string) (entities.Student, error) {
 }
 
 // Create mock store for Create of Student
-func (m mockStudentStore) Create(student entities.Student) (entities.Student, error) {
+func (m mockStudentStore) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
 		return entities.Student{}, errors.New("invalid phone no.")
 	}
@@ -431,7 +432,7 @@ func (m mockStudentStore) Create(student entities.Student) (entities.Student, er
 }
 
 // Update mock store for Update of Student
-func (m mockStudentStore) Update(student entities.Student) (entities.Student, error) {
+func (m mockStudentStore) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if student.ID != "1" {
 		return entities.Student{}, sql.ErrNoRows
 	}
@@ -454,7 +455,7 @@ func (m mockStudentStore) Update(student entities.Student) (entities.Student, er
 }
 
 // Delete mock store for Delete of Student
-func (m mockStudentStore) Delete(id string) error {
+func (m mockStudentStore) Delete(ctx context.Context, id string) error {
 	if id != "1" {
 		return sql.ErrNoRows
 	}
@@ -462,7 +463,7 @@ func (m mockStudentStore) Delete(id string) error {
 }
 
 // GetCompany mock store for GetCompany of Student
-func (m mockStudentStore) GetCompany(id string) (entities.Company, error) {
+func (m mockStudentStore) GetCompany(ctx context.Context, id string) (entities.Company, error) {
 	if id == "3" {
 		return entities.Company{}, sql.ErrNoRows
 	} else if id == "2" {

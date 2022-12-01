@@ -1,6 +1,7 @@
 package student
 
 import (
+	"context"
 	"database/sql"
 	"github.com/google/uuid"
 	"student-placement-api/entities"
@@ -16,7 +17,7 @@ func New(db *sql.DB) store {
 }
 
 // Create store to create a new student
-func (store store) Create(student entities.Student) (entities.Student, error) {
+func (store store) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
 	student.ID = uuid.NewString()
 	query := "INSERT INTO students (id, name, dob, phone, branch, company_id, status) VALUES(?, ?, ?, ?, ?, ?, ?)"
 	_, err := store.db.Exec(query, student.ID, student.Name, student.DOB, student.Phone, student.Branch,
@@ -28,7 +29,7 @@ func (store store) Create(student entities.Student) (entities.Student, error) {
 }
 
 // GetById store to get a student by ID
-func (store store) GetById(id string) (entities.Student, error) {
+func (store store) GetById(ctx context.Context, id string) (entities.Student, error) {
 	query := "SELECT students.id AS id, students.name AS name, students.dob AS dob, students.phone AS phone, " +
 		"students.branch AS branch, students.status AS status FROM students WHERE students.id=?"
 	row := store.db.QueryRow(query, id)
@@ -43,7 +44,7 @@ func (store store) GetById(id string) (entities.Student, error) {
 }
 
 // Get store to get all student or search student by name and branch
-func (store store) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
+func (store store) Get(ctx context.Context, name string, branch string, includeCompany bool) ([]entities.Student, error) {
 	var students = make([]entities.Student, 0)
 
 	if includeCompany == true {
@@ -87,7 +88,7 @@ func (store store) Get(name string, branch string, includeCompany bool) ([]entit
 }
 
 // Update store to update a particular student
-func (store store) Update(student entities.Student) (entities.Student, error) {
+func (store store) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
 	query := "UPDATE students SET name=?, phone=?, dob=?, branch=?, company_id=?, status=? WHERE id=?"
 	_, err := store.db.Exec(query, student.Name, student.Phone, student.DOB, student.Branch, student.Company.ID,
 		student.Status, student.ID)
@@ -99,7 +100,7 @@ func (store store) Update(student entities.Student) (entities.Student, error) {
 }
 
 // Delete store to delete a particular student
-func (store store) Delete(id string) error {
+func (store store) Delete(ctx context.Context, id string) error {
 	query := "DELETE FROM students WHERE id=?"
 	_, err := store.db.Exec(query, id)
 	if err != nil {
@@ -109,7 +110,7 @@ func (store store) Delete(id string) error {
 }
 
 // GetCompany store to get company's detail a particular company id
-func (store store) GetCompany(id string) (entities.Company, error) {
+func (store store) GetCompany(ctx context.Context, id string) (entities.Company, error) {
 	query := "SELECT * FROM companies WHERE id=?"
 
 	var company entities.Company
