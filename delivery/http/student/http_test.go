@@ -2,6 +2,7 @@ package student
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -69,21 +70,21 @@ func TestHandler_Handler(t *testing.T) {
 				"CORE",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Error: invalid branch"},
+			entities.ResponseMessage{"Error: invalid branch"},
 			http.MethodPut,
 			"Student should be updated and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Student deleted"},
+			entities.ResponseMessage{"Student deleted"},
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Student deleted"},
+			entities.ResponseMessage{"Student deleted"},
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
 		},
@@ -313,7 +314,7 @@ func TestHandler_Update(t *testing.T) {
 	testcases := []struct {
 		body          entities.Student
 		expecStatus   int
-		expecResponse entities.ErrorResponseMessage
+		expecResponse entities.ResponseMessage
 		description   string
 	}{
 		{
@@ -327,7 +328,7 @@ func TestHandler_Update(t *testing.T) {
 				"CORE",
 			},
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Student Updated"},
+			entities.ResponseMessage{"Student Updated"},
 			"Student should be updated and status code should be 200",
 		},
 		{
@@ -341,7 +342,7 @@ func TestHandler_Update(t *testing.T) {
 				"ACCEPTED",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Invalid Branch"},
+			entities.ResponseMessage{"Invalid Branch"},
 			"Student should not be update as branch is not valid and status code should be 400",
 		},
 		{
@@ -355,7 +356,7 @@ func TestHandler_Update(t *testing.T) {
 				"REJECTED",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Invalid Phone"},
+			entities.ResponseMessage{"Invalid Phone"},
 			"Student should not be update as phone no. is not valid and status code should be 400",
 		},
 		{
@@ -369,7 +370,7 @@ func TestHandler_Update(t *testing.T) {
 				"CORE",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Invalid Status"},
+			entities.ResponseMessage{"Invalid Status"},
 			"Student should not be update as status is not valid and status code should be 400",
 		},
 		{
@@ -383,7 +384,7 @@ func TestHandler_Update(t *testing.T) {
 				"PENDING",
 			},
 			http.StatusNotFound,
-			entities.ErrorResponseMessage{"Student not found"},
+			entities.ResponseMessage{"Student not found"},
 			"Student should not be update as no student with this id and status code should be 404",
 		},
 	}
@@ -408,19 +409,19 @@ func TestHandler_Delete(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecStatus   int
-		expecResponse entities.ErrorResponseMessage
+		expecResponse entities.ResponseMessage
 		description   string
 	}{
 		{
 			"1",
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Student deleted"},
+			entities.ResponseMessage{"Student deleted"},
 			"Student with that ID should be deleted and status code should be 200",
 		},
 		{
 			"2",
 			http.StatusNotFound,
-			entities.ErrorResponseMessage{"No student with that ID"},
+			entities.ResponseMessage{"No student with that ID"},
 			"Student with that ID is present so a company should be returned and status code should be 200",
 		},
 	}
@@ -442,7 +443,7 @@ func TestHandler_Delete(t *testing.T) {
 type mockStudentService struct{}
 
 // Get mock services for Get for Student
-func (m mockStudentService) Get(name string, branch string, includeCompany bool) ([]entities.Student, error) {
+func (m mockStudentService) Get(ctx context.Context, name string, branch string, includeCompany bool) ([]entities.Student, error) {
 	if name == "Student" && branch == "CSE" {
 		if includeCompany == true {
 			return []entities.Student{
@@ -459,7 +460,7 @@ func (m mockStudentService) Get(name string, branch string, includeCompany bool)
 }
 
 // GetByID mock services for GetByID for Student
-func (m mockStudentService) GetByID(id string) (entities.Student, error) {
+func (m mockStudentService) GetByID(ctx context.Context, id string) (entities.Student, error) {
 	if id != "1" {
 		return entities.Student{}, errors.New("student not found")
 	}
@@ -468,7 +469,7 @@ func (m mockStudentService) GetByID(id string) (entities.Student, error) {
 }
 
 // Create mock service for Create of Student
-func (m mockStudentService) Create(student entities.Student) (entities.Student, error) {
+func (m mockStudentService) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if student.Name == "" || student.Phone == "" || (student.Company.ID == "" && student.Company.Name == "" &&
 		student.Company.Category == "") || student.Branch == "" || student.DOB == "" || student.Status == "" {
 		return entities.Student{}, errors.New("all the fields are required, name, phone, dob, branch, company, status")
@@ -498,7 +499,7 @@ func (m mockStudentService) Create(student entities.Student) (entities.Student, 
 }
 
 // Update mock service for Update of Student
-func (m mockStudentService) Update(student entities.Student) (entities.Student, error) {
+func (m mockStudentService) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if student.ID != "1" {
 		return entities.Student{}, sql.ErrNoRows
 	}
@@ -520,7 +521,7 @@ func (m mockStudentService) Update(student entities.Student) (entities.Student, 
 }
 
 // Delete mock service for Delete of Student
-func (m mockStudentService) Delete(id string) error {
+func (m mockStudentService) Delete(ctx context.Context, id string) error {
 	if id != "1" {
 		return sql.ErrNoRows
 	}

@@ -2,6 +2,7 @@ package company
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -46,14 +47,14 @@ func TestHandler_Handler(t *testing.T) {
 				"MASS",
 			},
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Company Updated"},
+			entities.ResponseMessage{"Company Updated"},
 			http.MethodPut,
 			"Company should be updated and status code should be 200",
 		},
 		{
 			"1",
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Company deleted"},
+			entities.ResponseMessage{"Company deleted"},
 			http.MethodDelete,
 			"Company with that ID should be deleted and status code should be 200",
 		},
@@ -157,7 +158,7 @@ func TestHandler_Create(t *testing.T) {
 				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Error: Name and Category required"},
+			entities.ResponseMessage{"Error: Name and Category required"},
 			"Company should not be created as both parameters are mandatory is not valid and status code " +
 				"should be 400",
 		},
@@ -183,7 +184,7 @@ func TestHandler_Update(t *testing.T) {
 	testcases := []struct {
 		body          entities.Company
 		expecStatus   int
-		expecResponse entities.ErrorResponseMessage
+		expecResponse entities.ResponseMessage
 		description   string
 	}{
 		{
@@ -193,7 +194,7 @@ func TestHandler_Update(t *testing.T) {
 				"MASS",
 			},
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Company Updated"},
+			entities.ResponseMessage{"Company Updated"},
 			"Company should be updated and status code should be 200",
 		},
 		{
@@ -202,7 +203,7 @@ func TestHandler_Update(t *testing.T) {
 				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Error: Name and Category required"},
+			entities.ResponseMessage{"Error: Name and Category required"},
 			"Company should not be update as category is missing and status code should be 400",
 		},
 		{
@@ -211,7 +212,7 @@ func TestHandler_Update(t *testing.T) {
 				Category: "MASS",
 			},
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Error: ID required"},
+			entities.ResponseMessage{"Error: ID required"},
 			"Company should not be update as id is missing and status code should be 400",
 		},
 	}
@@ -236,25 +237,25 @@ func TestHandler_Delete(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecStatus   int
-		expecResponse entities.ErrorResponseMessage
+		expecResponse entities.ResponseMessage
 		description   string
 	}{
 		{
 			"1",
 			http.StatusOK,
-			entities.ErrorResponseMessage{"Company deleted"},
+			entities.ResponseMessage{"Company deleted"},
 			"Company with that ID should be deleted and status code should be 200",
 		},
 		{
 			"2",
 			http.StatusNotFound,
-			entities.ErrorResponseMessage{"Error: Company not found"},
+			entities.ResponseMessage{"Error: Company not found"},
 			"Company with that ID is present so a company should be returned and status code should be 200",
 		},
 		{
 			"",
 			http.StatusBadRequest,
-			entities.ErrorResponseMessage{"Error: ID required"},
+			entities.ResponseMessage{"Error: ID required"},
 			"Id should be passed in the query paramenter and status code should be 200",
 		},
 	}
@@ -276,7 +277,7 @@ func TestHandler_Delete(t *testing.T) {
 type mockCompanyService struct{}
 
 // GetByID mock services for GetByID for Company
-func (m mockCompanyService) GetByID(id string) (entities.Company, error) {
+func (m mockCompanyService) GetByID(ctx context.Context, id string) (entities.Company, error) {
 	if id != "1" {
 		return entities.Company{}, sql.ErrNoRows
 	}
@@ -284,7 +285,7 @@ func (m mockCompanyService) GetByID(id string) (entities.Company, error) {
 }
 
 // Create mock service for Create of Company
-func (m mockCompanyService) Create(company entities.Company) (entities.Company, error) {
+func (m mockCompanyService) Create(ctx context.Context, company entities.Company) (entities.Company, error) {
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return entities.Company{"1", "Test Company", "MASS"}, nil
@@ -294,7 +295,7 @@ func (m mockCompanyService) Create(company entities.Company) (entities.Company, 
 }
 
 // Update mock service for Update of Company
-func (m mockCompanyService) Update(company entities.Company) (entities.Company, error) {
+func (m mockCompanyService) Update(ctx context.Context, company entities.Company) (entities.Company, error) {
 	if company.ID == "3" {
 		return entities.Company{}, sql.ErrNoRows
 	}
@@ -308,7 +309,7 @@ func (m mockCompanyService) Update(company entities.Company) (entities.Company, 
 }
 
 // Delete mock service for Delete of Company
-func (m mockCompanyService) Delete(id string) error {
+func (m mockCompanyService) Delete(ctx context.Context, id string) error {
 	if id != "1" {
 		return sql.ErrNoRows
 	}

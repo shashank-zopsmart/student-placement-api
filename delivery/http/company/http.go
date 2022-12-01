@@ -2,12 +2,11 @@ package company
 
 import (
 	"encoding/json"
-	"student-placement-api/errors"
-
 	"io"
 	"net/http"
 	"strings"
 	"student-placement-api/entities"
+	"student-placement-api/errors"
 	"student-placement-api/service"
 )
 
