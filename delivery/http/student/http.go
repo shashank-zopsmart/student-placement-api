@@ -272,7 +272,7 @@ func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.Update(student)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			response, err := json.Marshal(entities.ErrorResponseMessage{"Student not found"})
+			response, err := json.Marshal(entities.ErrorResponseMessage{"Error: " + err.Error()})
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Error: %v", err)))
