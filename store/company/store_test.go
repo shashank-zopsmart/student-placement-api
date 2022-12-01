@@ -30,7 +30,7 @@ func TestStore_GetByID(t *testing.T) {
 		{"1", entities.Company{"1", "Test Company", "MASS"}, nil,
 			"Company with that ID exists"},
 		{"2", entities.Company{}, sql.ErrNoRows, "No company exists with that ID"},
-		//{"2", entities.Company{}, sql.ErrConnDone, "Database connection is closed"},
+		{"2", entities.Company{}, sql.ErrConnDone, "Database connection is closed"},
 	}
 
 	for i, _ := range testcases {
@@ -41,7 +41,12 @@ func TestStore_GetByID(t *testing.T) {
 			rows.AddRow(testcases[i].expRes.ID, testcases[i].expRes.Name, testcases[i].expRes.Category)
 		}
 
-		mock.ExpectQuery("SELECT * FROM companies WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
+		switch testcases[i].expErr {
+		case sql.ErrConnDone:
+			mock.ExpectQuery("SELECT * FROM companies WHERE id=?").WillReturnError(sql.ErrConnDone)
+		default:
+			mock.ExpectQuery("SELECT * FROM companies WHERE id=?").WithArgs(testcases[i].id).WillReturnRows(rows)
+		}
 
 		actualRes, actualErr := store.GetByID(testcases[i].id)
 
@@ -75,21 +80,27 @@ func TestStore_Create(t *testing.T) {
 			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
 			"Company should be inserted",
 		},
+		{
+			entities.Company{Name: "Test Company", Category: "MASS"},
+			entities.Company{}, sql.ErrConnDone, "Database connection closed",
+		},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("INSERT INTO companies (id, name, category) VALUES(?, ?, ?)").
-			WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.Category).
-			WillReturnResult(sqlmock.NewResult(0, 1))
+		switch testcases[i].expErr {
+		case sql.ErrConnDone:
+			mock.ExpectExec("INSERT INTO companies (id, name, category) VALUES(?, ?, ?)").
+				WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.Category).
+				WillReturnError(sql.ErrConnDone)
+		default:
+			mock.ExpectExec("INSERT INTO companies (id, name, category) VALUES(?, ?, ?)").
+				WithArgs(sqlmock.AnyArg(), testcases[i].input.Name, testcases[i].input.Category).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+		}
 
 		_, actualErr := store.Create(testcases[i].input)
-
-		//if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
-		//	t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expRes,
-		//		actualRes, testcases[i].desc)
-		//}
 
 		if !reflect.DeepEqual(actualErr, testcases[i].expErr) {
 			t.Errorf(" Test: %v\n Expected: %v\n Actual: %v\n Description: %v", i+1, testcases[i].expErr,
@@ -116,15 +127,26 @@ func TestStore_Update(t *testing.T) {
 			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"}, nil,
 			"Company detail should be updated",
 		},
+		{
+			entities.Company{ID: "1", Name: "Test Company", Category: "MASS"},
+			entities.Company{}, sql.ErrConnDone,
+			"Database connection closed",
+		},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("UPDATE companies SET name=?, category=? WHERE id=?").
-			WithArgs(testcases[i].input.Name, testcases[i].input.Category, testcases[i].input.ID).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
+		switch testcases[i].expErr {
+		case sql.ErrConnDone:
+			mock.ExpectExec("UPDATE companies SET name=?, category=? WHERE id=?").
+				WithArgs(testcases[i].input.Name, testcases[i].input.Category, testcases[i].input.ID).
+				WillReturnError(sql.ErrConnDone)
+		default:
+			mock.ExpectExec("UPDATE companies SET name=?, category=? WHERE id=?").
+				WithArgs(testcases[i].input.Name, testcases[i].input.Category, testcases[i].input.ID).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+		}
 		actualRes, actualErr := store.Update(testcases[i].input)
 
 		if !reflect.DeepEqual(actualRes, testcases[i].expRes) {
@@ -152,14 +174,21 @@ func TestStore_Delete(t *testing.T) {
 		desc   string
 	}{
 		{"1", nil, "Company should be deleted"},
+		{"1", sql.ErrConnDone, "Database connection closed"},
 	}
 
 	for i, _ := range testcases {
 		store := New(db)
 
-		mock.ExpectExec("DELETE FROM companies WHERE id=?").
-			WithArgs(testcases[i].id).
-			WillReturnResult(sqlmock.NewResult(0, 1))
+		switch testcases[i].expErr {
+		case sql.ErrConnDone:
+			mock.ExpectExec("DELETE FROM companies WHERE id=?").WithArgs(testcases[i].id).
+				WillReturnError(sql.ErrConnDone)
+		default:
+			mock.ExpectExec("DELETE FROM companies WHERE id=?").
+				WithArgs(testcases[i].id).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+		}
 
 		actualErr := store.Delete(testcases[i].id)
 

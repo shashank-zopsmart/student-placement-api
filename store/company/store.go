@@ -23,6 +23,9 @@ func (store store) Create(company entities.Company) (entities.Company, error) {
 
 	_, err := store.db.Exec(query, company.ID, company.Name, company.Category)
 	if err != nil {
+		if err == sql.ErrNoRows {
+
+		}
 		return entities.Company{}, err
 	}
 
