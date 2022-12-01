@@ -49,7 +49,7 @@ func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.GetByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(entities.ResponseMessage{"Error: " + err.Error()})
+		response, _ := json.Marshal(entities.ResponseMessage{"Company not found"})
 		w.Write(response)
 		return
 	}

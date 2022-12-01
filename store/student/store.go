@@ -22,12 +22,11 @@ func (store store) GetById(id string) (entities.Student, error) {
 	}
 
 	query := "SELECT student.id AS id, student.name AS name, student.dob AS dob, student.phone AS phone, " +
-		"student.branch AS branch, company.id AS companyID, student.status AS status FROM student JOIN company ON " +
-		"student.id=company.id WHERE student.id=?"
+		"student.branch AS branch, student.status AS status FROM student WHERE student.id=?"
 	row := store.db.QueryRow(query, id)
 	var student entities.Student
 
-	if err := row.Scan(&student.ID, &student.Name, &student.DOB, &student.Phone, &student.Branch, &student.Company.ID,
+	if err := row.Scan(&student.ID, &student.Name, &student.DOB, &student.Phone, &student.Branch,
 		&student.Status); err != nil {
 		return entities.Student{}, err
 	}
@@ -117,7 +116,7 @@ func (store store) Update(student entities.Student) (entities.Student, error) {
 		return entities.Student{}, sql.ErrNoRows
 	}
 
-	query := "UPDATE student SET name=?, phone=?, dob=?, branch=?, company=?, status=? WHERE id=?"
+	query := "UPDATE student SET name=?, phone=?, dob=?, branch=?, companyID=?, status=? WHERE id=?"
 	_, err := store.db.Exec(query, student.Name, student.Phone, student.DOB, student.Branch, student.Company.ID, student.Status,
 		student.ID)
 	if err != nil {
@@ -155,6 +154,7 @@ func (store store) GetCompany(id string) (entities.Company, error) {
 	var company entities.Company
 	row := store.db.QueryRow(query, id)
 	err := row.Scan(&company.ID, &company.Name, &company.Category)
+
 	if err != nil {
 		return entities.Company{}, err
 	}

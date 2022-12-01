@@ -30,9 +30,10 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 
 		if id == "" && name == "" && branch == "" && includeCompany == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			response, _ := json.Marshal(entities.ResponseMessage{"Error: Either ID or name, company and " +
+			response, _ := json.Marshal(entities.ResponseMessage{"Error: Either ID or name, branch and " +
 				"includeCompany required"})
 			w.Write(response)
+			return
 		}
 
 		if id != "" {
@@ -80,7 +81,7 @@ func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.Get(name, branch, includeCompanyFlag)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(result)
+		response, _ := json.Marshal(entities.ResponseMessage{"Student not found"})
 		w.Write(response)
 		return
 	}
@@ -97,7 +98,7 @@ func (handler handler) GetByID(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.GetByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		response, _ := json.Marshal(result)
+		response, _ := json.Marshal(entities.ResponseMessage{"Student not found"})
 		w.Write(response)
 		return
 	}
