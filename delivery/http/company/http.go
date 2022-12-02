@@ -215,6 +215,6 @@ func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 	w.Write(response)
 }
