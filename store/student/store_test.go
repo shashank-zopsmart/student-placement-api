@@ -90,12 +90,12 @@ func TestStore_Get(t *testing.T) {
 				},
 			},
 			errors.EntityNotFound{Entity: "Student"}, "Student with that name and branch doesn't exit"},
-		//{
-		//	inputStruct{"Test Company", "CSE", false},
-		//	[]entities.Student{},
-		//	[]entities.Student{}, errors.ConnDone{},
-		//	"Student with that ID exists so student should be returned",
-		//},
+		{
+			inputStruct{"Test Company", "CSE", false},
+			[]entities.Student{},
+			[]entities.Student{}, errors.ConnDone{},
+			"Student with that ID exists so student should be returned",
+		},
 	}
 
 	for i, _ := range testcases {
@@ -103,37 +103,51 @@ func TestStore_Get(t *testing.T) {
 
 		switch testcases[i].input.includeCompany {
 		case true:
+			expQuery := "SELECT students.id AS id, students.name AS name, students.dob AS dob, students.phone AS phone, " +
+				"students.branch AS branch, companies.id AS companyID, companies.name AS companyName, " +
+				"companies.category AS companyCategory, students.status AS status FROM students JOIN companies ON " +
+				"students.company_id=companies.id WHERE students.name=? AND students.branch=?"
+
 			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "companyID", "companyName",
 				"companyCategory", "status"})
 
-			if testcases[i].expErr == nil {
+			switch testcases[i].expErr {
+			case nil:
 				for j, _ := range testcases[i].expRes {
 					rows.AddRow(testcases[i].mockRows[j].ID, testcases[i].mockRows[j].Name, testcases[i].mockRows[j].DOB,
 						testcases[i].mockRows[j].Phone, testcases[i].mockRows[j].Branch,
 						testcases[i].mockRows[j].Company.ID, testcases[i].mockRows[j].Company.Name,
 						testcases[i].mockRows[j].Company.Category, testcases[i].mockRows[j].Status)
 				}
+				mock.ExpectQuery(expQuery).WithArgs(testcases[i].input.name, testcases[i].input.branch).
+					WillReturnRows(rows)
+			case errors.ConnDone{}:
+				mock.ExpectQuery(expQuery).WillReturnError(sql.ErrConnDone)
+			case errors.EntityNotFound{"Company"}:
+				mock.ExpectQuery(expQuery).
+					WillReturnError(sql.ErrConnDone)
 			}
 
-			mock.ExpectQuery("SELECT students.id AS id, students.name AS name, students.dob AS dob, "+
-				"students.phone AS phone, students.branch AS branch, companies.id AS companyID, companies.name AS companyName, "+
-				"companies.category AS companyCategory, students.status AS status FROM students JOIN companies "+
-				"ON students.company_id=companies.id WHERE students.name=? AND students.branch=?").
-				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
-
 		case false:
+			expQuery := "SELECT id, name, dob, phone, branch, status FROM students WHERE students.name=? AND " +
+				"students.branch=?"
 			rows := mock.NewRows([]string{"id", "name", "dob", "phone", "branch", "status"})
-			if testcases[i].expErr == nil {
+			switch testcases[i].expErr {
+			case nil:
 				for j, _ := range testcases[i].expRes {
 					rows.AddRow(testcases[i].mockRows[j].ID, testcases[i].mockRows[j].Name, testcases[i].mockRows[j].DOB,
 						testcases[i].mockRows[j].Phone, testcases[i].mockRows[j].Branch,
 						testcases[i].mockRows[j].Status)
 				}
+				mock.ExpectQuery(expQuery).WithArgs(testcases[i].input.name, testcases[i].input.branch).
+					WillReturnRows(rows)
+			case errors.ConnDone{}:
+				mock.ExpectQuery(expQuery).WithArgs(testcases[i].input.name, testcases[i].input.branch).
+					WillReturnError(sql.ErrConnDone)
+			case errors.EntityNotFound{"Student"}:
+				mock.ExpectQuery(expQuery).WithArgs(testcases[i].input.name, testcases[i].input.branch).
+					WillReturnError(sql.ErrNoRows)
 			}
-
-			mock.ExpectQuery("SELECT id, name, dob, phone, branch, status FROM students WHERE students.name=? "+
-				"AND students.branch=?").
-				WithArgs(testcases[i].input.name, testcases[i].input.branch).WillReturnRows(rows)
 		}
 
 		actualRes, actualErr := store.Get(context.Background(), testcases[i].input.name, testcases[i].input.branch,
