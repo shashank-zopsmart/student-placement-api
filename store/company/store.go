@@ -39,7 +39,12 @@ func (store store) GetByID(ctx context.Context, id string) (entities.Company, er
 	row := store.db.QueryRow(query, id)
 	err := row.Scan(&company.ID, &company.Name, &company.Category)
 	if err != nil {
-		return entities.Company{}, errors.EntityNotFound{Entity: "Company"}
+		switch err {
+		case sql.ErrConnDone:
+			return entities.Company{}, errors.ConnDone{}
+		case sql.ErrNoRows:
+			return entities.Company{}, errors.EntityNotFound{"Company"}
+		}
 	}
 
 	return company, nil

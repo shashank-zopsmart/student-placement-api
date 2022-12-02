@@ -38,7 +38,12 @@ func (store store) GetById(ctx context.Context, id string) (entities.Student, er
 
 	if err := row.Scan(&student.ID, &student.Name, &student.DOB, &student.Phone, &student.Branch,
 		&student.Status); err != nil {
-		return entities.Student{}, errors.EntityNotFound{Entity: "Student"}
+		switch err {
+		case sql.ErrConnDone:
+			return entities.Student{}, errors.ConnDone{}
+		case sql.ErrNoRows:
+			return entities.Student{}, errors.EntityNotFound{Entity: "Student"}
+		}
 	}
 
 	return student, nil
@@ -56,7 +61,12 @@ func (store store) Get(ctx context.Context, name string, branch string, includeC
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
-			return []entities.Student{}, errors.ConnDone{}
+			switch err {
+			case sql.ErrConnDone:
+				return []entities.Student{}, errors.ConnDone{}
+			case sql.ErrNoRows:
+				return []entities.Student{}, errors.EntityNotFound{Entity: "Student"}
+			}
 		}
 
 		for rows.Next() {
@@ -70,7 +80,12 @@ func (store store) Get(ctx context.Context, name string, branch string, includeC
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
-			return []entities.Student{}, errors.ConnDone{}
+			switch err {
+			case sql.ErrConnDone:
+				return []entities.Student{}, errors.ConnDone{}
+			case sql.ErrNoRows:
+				return []entities.Student{}, errors.EntityNotFound{Entity: "Student"}
+			}
 		}
 
 		for rows.Next() {
@@ -119,7 +134,12 @@ func (store store) GetCompany(ctx context.Context, id string) (entities.Company,
 	err := row.Scan(&company.ID, &company.Name, &company.Category)
 
 	if err != nil {
-		return entities.Company{}, errors.EntityNotFound{Entity: "Company"}
+		switch err {
+		case sql.ErrConnDone:
+			return entities.Company{}, errors.ConnDone{}
+		case sql.ErrNoRows:
+			return entities.Company{}, errors.EntityNotFound{Entity: "Company"}
+		}
 	}
 
 	return company, nil
