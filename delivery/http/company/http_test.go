@@ -53,7 +53,7 @@ func TestHandler_Handler(t *testing.T) {
 		},
 		{
 			"1",
-			http.StatusOK,
+			http.StatusNoContent,
 			entities.ResponseMessage{"Company deleted"},
 			http.MethodDelete,
 			"Company with that ID should be deleted and status code should be 200",
@@ -300,7 +300,7 @@ func TestHandler_Delete(t *testing.T) {
 	}{
 		{
 			"1",
-			http.StatusOK,
+			http.StatusNoContent,
 			entities.ResponseMessage{"Company deleted"},
 			"Company with that ID should be deleted and status code should be 200",
 		},

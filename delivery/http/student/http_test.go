@@ -84,14 +84,14 @@ func TestHandler_Handler(t *testing.T) {
 		},
 		{
 			"1",
-			http.StatusOK,
+			http.StatusNoContent,
 			entities.ResponseMessage{"Student deleted"},
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
 		},
 		{
 			"1",
-			http.StatusOK,
+			http.StatusNoContent,
 			entities.ResponseMessage{"Student deleted"},
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
@@ -457,7 +457,7 @@ func TestHandler_Delete(t *testing.T) {
 	}{
 		{
 			"1",
-			http.StatusOK,
+			http.StatusNoContent,
 			entities.ResponseMessage{"Student deleted"},
 			"Student with that ID should be deleted and status code should be 200",
 		},
