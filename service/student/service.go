@@ -2,11 +2,10 @@ package student
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"student-placement-api/entities"
+	"student-placement-api/errors"
 	"student-placement-api/store"
 	"time"
 	"unicode"
@@ -24,48 +23,48 @@ func New(store store.Student) service {
 // Create to create a new student
 func (service service) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if len(student.Name) < 3 {
-		return entities.Student{}, errors.New("invalid name, it must of minimum 3 characters")
+		return entities.Student{}, errors.InvalidParams{Message: "Name should be of at least 2 characters"}
 	}
 
 	if ageValidate, err := validateAge(student.DOB, 22); err != nil {
-		return entities.Student{}, errors.New("invalid dob, use dd/mm/yyyy")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid DOB, Use dd/mm/yyyy"}
 	} else if ageValidate == false {
-		return entities.Student{}, errors.New("student doesn't meet minimum age requirement")
+		return entities.Student{}, errors.InvalidParams{Message: "Student doesn't meet minimum age requirement"}
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return entities.Student{}, errors.New("invalid phone, must be of 10-12 digits")
+		return entities.Student{}, errors.InvalidParams{Message: "Phone must be of 10-12 digits"}
 	}
 
 	if validatePhone(student.Phone) == false {
-		return entities.Student{}, errors.New("invalid phone")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid Phone"}
 	}
 
 	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
-		return entities.Student{}, errors.New("invalid status")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid Status"}
 	}
 
 	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("invalid branch")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid Branch"}
 	}
 
 	var company, err = service.store.GetCompany(ctx, student.Company.ID)
 	if err != nil {
-		return entities.Student{}, errors.New(fmt.Sprintf("Company not found %v", err))
+		return entities.Student{}, errors.EntityNotFound{Entity: "Company"}
 	}
 
 	if company.Category == "DREAM IT" && !(student.Branch == "CSE" || student.Branch == "ISE") {
-		return entities.Student{}, errors.New("branch not allowed in this company")
+		return entities.Student{}, errors.InvalidParams{Message: "Branch not allowed in this company"}
 	}
 
 	if company.Category == "OPEN DREAM" && !(student.Branch == "CSE" || student.Branch == "ISE" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("branch not allowed in this company")
+		return entities.Student{}, errors.InvalidParams{Message: "Branch not allowed in this company"}
 	}
 
 	if company.Category == "CORE" && !(student.Branch == "CIVIL" || student.Branch == "MECH") {
-		return entities.Student{}, errors.New("branch not allowed in this company")
+		return entities.Student{}, errors.InvalidParams{Message: "Branch not allowed in this company"}
 	}
 
 	return service.store.Create(ctx, student)
@@ -85,53 +84,52 @@ func (service service) GetByID(ctx context.Context, id string) (entities.Student
 func (service service) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
 	_, err := service.store.GetById(ctx, student.ID)
 	if err != nil {
-		return entities.Student{}, err
+		return entities.Student{}, errors.EntityNotFound{Entity: "Student"}
 	}
 
 	if len(student.Name) < 3 {
-		return entities.Student{}, errors.New("invalid name, it must of minimum 3 characters")
+		return entities.Student{}, errors.InvalidParams{Message: "Name should be of at least 2 characters"}
 	}
 
 	if ageValidate, err := validateAge(student.DOB, 22); err != nil {
-		return entities.Student{}, errors.New("invalid dob, use dd/mm/yyyy")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid DOB, Use dd/mm/yyyy"}
 	} else if ageValidate == false {
-		return entities.Student{}, errors.New("student doesn't meet minimum age requirement")
+		return entities.Student{}, errors.InvalidParams{Message: "Student doesn't meet minimum age requirement"}
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return entities.Student{}, errors.New("invalid phone, must be of 10-12 digits")
+		return entities.Student{}, errors.InvalidParams{Message: "Phone must be of 10-12 digits"}
 	}
 
 	if validatePhone(student.Phone) == false {
-		return entities.Student{}, errors.New("invalid phone")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid Phone"}
 	}
 
 	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
-		return entities.Student{}, errors.New("invalid status")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid Status"}
 	}
 
 	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("invalid branch")
+		return entities.Student{}, errors.InvalidParams{Message: "Invalid Branch"}
 	}
 
 	company, err := service.store.GetCompany(ctx, student.Company.ID)
-
 	if err != nil {
-		return entities.Student{}, err
+		return entities.Student{}, errors.EntityNotFound{Entity: "Company"}
 	}
 
 	if company.Category == "DREAM IT" && !(student.Branch == "CSE" || student.Branch == "ISE") {
-		return entities.Student{}, errors.New("branch not allowed in this company")
+		return entities.Student{}, errors.InvalidParams{Message: "Branch not allowed in this company"}
 	}
 
 	if company.Category == "OPEN DREAM" && !(student.Branch == "CSE" || student.Branch == "ISE" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("branch not allowed in this company")
+		return entities.Student{}, errors.InvalidParams{Message: "Branch not allowed in this company"}
 	}
 
 	if company.Category == "CORE" && !(student.Branch == "CIVIL" || student.Branch == "MECH") {
-		return entities.Student{}, errors.New("branch not allowed in this company")
+		return entities.Student{}, errors.InvalidParams{Message: "Branch not allowed in this company"}
 	}
 
 	return service.store.Update(ctx, student)
@@ -141,7 +139,7 @@ func (service service) Update(ctx context.Context, student entities.Student) (en
 func (service service) Delete(ctx context.Context, id string) error {
 	_, err := service.store.GetById(ctx, id)
 	if err != nil {
-		return err
+		return errors.EntityNotFound{Entity: "Student"}
 	}
 	return service.store.Delete(ctx, id)
 }

@@ -7,5 +7,5 @@ type HttpErrors struct {
 }
 
 func (h HttpErrors) Error() string {
-	return fmt.Sprintf("%v", h.ErrorMessage)
+	return fmt.Sprintf("Error: %v", h.ErrorMessage)
 }
