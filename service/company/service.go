@@ -2,7 +2,8 @@ package company
 
 import (
 	"context"
-	"errors"
+	"student-placement-api/errors"
+
 	"student-placement-api/entities"
 	"student-placement-api/store"
 )
@@ -22,7 +23,7 @@ func (service service) Create(ctx context.Context, company entities.Company) (en
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return service.store.Create(ctx, company)
 	default:
-		return entities.Company{}, errors.New("invalid category")
+		return entities.Company{}, errors.InvalidParams{"Invalid Category"}
 	}
 }
 
@@ -35,13 +36,13 @@ func (service service) GetByID(ctx context.Context, id string) (entities.Company
 func (service service) Update(ctx context.Context, company entities.Company) (entities.Company, error) {
 	_, err := service.store.GetByID(ctx, company.ID)
 	if err != nil {
-		return entities.Company{}, err
+		return entities.Company{}, errors.EntityNotFound{"Company"}
 	}
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return service.store.Update(ctx, company)
 	default:
-		return entities.Company{}, errors.New("invalid category")
+		return entities.Company{}, errors.InvalidParams{"Invalid Category"}
 	}
 }
 
@@ -49,7 +50,7 @@ func (service service) Update(ctx context.Context, company entities.Company) (en
 func (service service) Delete(ctx context.Context, id string) error {
 	_, err := service.store.GetByID(ctx, id)
 	if err != nil {
-		return err
+		return errors.EntityNotFound{"Company"}
 	}
 	return service.store.Delete(ctx, id)
 }

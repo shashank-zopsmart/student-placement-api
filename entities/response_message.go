@@ -1,5 +1,5 @@
 package entities
 
-type ErrorResponseMessage struct {
+type ResponseMessage struct {
 	Message string `json:"message"`
 }
