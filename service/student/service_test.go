@@ -162,6 +162,45 @@ func TestService_Create(t *testing.T) {
 		},
 		{
 			entities.Student{
+				Name:    "Test Student",
+				DOB:     "12/12/2010",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Student doesn't meet minimum age requirement"},
+			entities.Student{},
+			"Student should be added as doesn't meet minimum age requirement",
+		},
+		{
+			entities.Student{
+				Name:    "Test Student",
+				DOB:     "12/12/201",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Invalid DOB, Use dd/mm/yyyy"},
+			entities.Student{},
+			"Invalid DOB, Use dd/mm/yyyy",
+		},
+		{
+			entities.Student{
+				Name:    "T",
+				DOB:     "12/12/2010",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Name should be of at least 2 characters"},
+			entities.Student{},
+			"Name should be of at least 2 characters",
+		},
+		{
+			entities.Student{
 				Name:    "Test Student 2",
 				DOB:     "12/12/2000",
 				Phone:   "9876543210",
@@ -188,6 +227,19 @@ func TestService_Create(t *testing.T) {
 		},
 		{
 			entities.Student{
+				Name:    "Test Student 2",
+				DOB:     "12/12/2000",
+				Phone:   "987654321a",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Invalid Phone"},
+			entities.Student{},
+			"Phone No. contains a non digit character",
+		},
+		{
+			entities.Student{
 				Name:    "Test Student 3",
 				DOB:     "12/12/2000",
 				Phone:   "9876543210",
@@ -198,6 +250,45 @@ func TestService_Create(t *testing.T) {
 			errors.InvalidParams{"Invalid Status"},
 			entities.Student{},
 			"Student should not be created as status is not valid",
+		},
+		{
+			entities.Student{
+				Name:    "Test Student 3",
+				DOB:     "12/12/2000",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "10"},
+				Status:  "ACCEPTED",
+			},
+			errors.InvalidParams{"Branch not allowed in this company"},
+			entities.Student{},
+			"Branch not allowed in this company",
+		},
+		{
+			entities.Student{
+				Name:    "Test Student 3",
+				DOB:     "12/12/2000",
+				Phone:   "9876543210",
+				Branch:  "CIVIL",
+				Company: entities.Company{ID: "20"},
+				Status:  "ACCEPTED",
+			},
+			errors.InvalidParams{"Branch not allowed in this company"},
+			entities.Student{},
+			"Branch not allowed in this company",
+		},
+		{
+			entities.Student{
+				Name:    "Test Student 3",
+				DOB:     "12/12/2000",
+				Phone:   "9876543210",
+				Branch:  "CIVIL",
+				Company: entities.Company{ID: "30"},
+				Status:  "ACCEPTED",
+			},
+			errors.EntityNotFound{"Company"},
+			entities.Student{},
+			"Company with this ID doesn't exist",
 		},
 	}
 
@@ -331,6 +422,90 @@ func TestService_Update(t *testing.T) {
 			entities.Student{},
 			"Student should not be update as no student with this id",
 		},
+		{
+			entities.Student{
+				ID:      "1",
+				Name:    "Test Student 2",
+				DOB:     "12/12/2000",
+				Phone:   "987654321a",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Invalid Phone"},
+			entities.Student{},
+			"Phone No. contains a non digit character",
+		},
+		{
+			entities.Student{
+				ID:      "1",
+				Name:    "Test Student",
+				DOB:     "12/12/201",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Invalid DOB, Use dd/mm/yyyy"},
+			entities.Student{},
+			"Invalid DOB, Use dd/mm/yyyy",
+		},
+		{
+			entities.Student{
+				ID:      "1",
+				Name:    "T",
+				DOB:     "12/12/2010",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "1"},
+				Status:  "PENDING",
+			},
+			errors.InvalidParams{"Name should be of at least 2 characters"},
+			entities.Student{},
+			"Name should be of at least 2 characters",
+		},
+		{
+			entities.Student{
+				ID:      "1",
+				Name:    "Test Student 3",
+				DOB:     "12/12/2000",
+				Phone:   "9876543210",
+				Branch:  "CSE",
+				Company: entities.Company{ID: "10"},
+				Status:  "ACCEPTED",
+			},
+			errors.InvalidParams{"Branch not allowed in this company"},
+			entities.Student{},
+			"Branch not allowed in this company",
+		},
+		{
+			entities.Student{
+				ID:      "1",
+				Name:    "Test Student 3",
+				DOB:     "12/12/2000",
+				Phone:   "9876543210",
+				Branch:  "CIVIL",
+				Company: entities.Company{ID: "20"},
+				Status:  "ACCEPTED",
+			},
+			errors.InvalidParams{"Branch not allowed in this company"},
+			entities.Student{},
+			"Branch not allowed in this company",
+		},
+		{
+			entities.Student{
+				ID:      "1",
+				Name:    "Test Student 3",
+				DOB:     "12/12/2000",
+				Phone:   "9876543210",
+				Branch:  "CIVIL",
+				Company: entities.Company{ID: "30"},
+				Status:  "ACCEPTED",
+			},
+			errors.EntityNotFound{"Company"},
+			entities.Student{},
+			"Company with this ID doesn't exist",
+		},
 	}
 
 	for i := range testcases {
@@ -431,5 +606,14 @@ func (m mockStudentStore) Delete(ctx context.Context, id string) error {
 
 // GetCompany mock store for GetCompany of Student
 func (m mockStudentStore) GetCompany(ctx context.Context, id string) (entities.Company, error) {
+	if id == "10" {
+		return entities.Company{"1", "Test Company", "CORE"}, nil
+	}
+	if id == "20" {
+		return entities.Company{"1", "Test Company", "DREAM IT"}, nil
+	}
+	if id == "30" {
+		return entities.Company{}, errors.EntityNotFound{"Company"}
+	}
 	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
