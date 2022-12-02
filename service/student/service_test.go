@@ -2,8 +2,8 @@ package student
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+	"student-placement-api/errors"
+
 	"fmt"
 	"reflect"
 	"student-placement-api/entities"
@@ -47,7 +47,7 @@ func TestService_Get(t *testing.T) {
 			"Student",
 			"CSE2",
 			false,
-			sql.ErrNoRows,
+			errors.EntityNotFound{"Student"},
 			[]entities.Student{},
 			"Student with that name and branch branch is not present error will be thrown",
 		},
@@ -55,7 +55,7 @@ func TestService_Get(t *testing.T) {
 			"Student5",
 			"CSE",
 			false,
-			sql.ErrNoRows,
+			errors.EntityNotFound{"Student"},
 			[]entities.Student{},
 			"Student with that name and branch branch is not present error will be thrown",
 		},
@@ -95,7 +95,7 @@ func TestService_GetByID(t *testing.T) {
 		},
 		{
 			"2",
-			sql.ErrNoRows,
+			errors.EntityNotFound{"Student"},
 			entities.Student{},
 			"Student with that ID is not present so error will be returned",
 		},
@@ -156,7 +156,7 @@ func TestService_Create(t *testing.T) {
 				Company: entities.Company{ID: "1"},
 				Status:  "PENDING",
 			},
-			errors.New("student doesn't meet minimum age requirement"),
+			errors.InvalidParams{"Student doesn't meet minimum age requirement"},
 			entities.Student{},
 			"Student should be added as doesn't meet minimum age requirement",
 		},
@@ -169,7 +169,7 @@ func TestService_Create(t *testing.T) {
 				Company: entities.Company{ID: "1"},
 				Status:  "PENDING",
 			},
-			errors.New("invalid branch"),
+			errors.InvalidParams{"Invalid Branch"},
 			entities.Student{},
 			"Student should not be created as branch is not valid",
 		},
@@ -182,7 +182,7 @@ func TestService_Create(t *testing.T) {
 				Company: entities.Company{ID: "1"},
 				Status:  "PENDING",
 			},
-			errors.New("invalid phone, must be of 10-12 digits"),
+			errors.InvalidParams{"Phone must be of 10-12 digits"},
 			entities.Student{},
 			"Student should not be created as phone is not valid",
 		},
@@ -195,7 +195,7 @@ func TestService_Create(t *testing.T) {
 				Company: entities.Company{ID: "1"},
 				Status:  "SUCCESS",
 			},
-			errors.New("invalid status"),
+			errors.InvalidParams{"Invalid Status"},
 			entities.Student{},
 			"Student should not be created as status is not valid",
 		},
@@ -257,7 +257,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"PENDING",
 			},
-			errors.New("student doesn't meet minimum age requirement"),
+			errors.InvalidParams{"Student doesn't meet minimum age requirement"},
 			entities.Student{},
 			"Student should be added as doesn't meet minimum age requirement",
 		},
@@ -271,7 +271,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"ACCEPTED",
 			},
-			errors.New("invalid branch"),
+			errors.InvalidParams{"Invalid Branch"},
 			entities.Student{},
 			"Student should not be update as branch is not valid",
 		},
@@ -285,7 +285,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"REJECTED",
 			},
-			errors.New("invalid phone, must be of 10-12 digits"),
+			errors.InvalidParams{"Phone must be of 10-12 digits"},
 			entities.Student{},
 			"Student should not be update as phone no. is not valid",
 		},
@@ -295,11 +295,11 @@ func TestService_Update(t *testing.T) {
 				"Test Student",
 				"12/12/2000",
 				"ECE",
-				"987654321013311",
+				"98713311",
 				entities.Company{ID: "1"},
 				"CORE",
 			},
-			errors.New("invalid phone, must be of 10-12 digits"),
+			errors.InvalidParams{"Phone must be of 10-12 digits"},
 			entities.Student{},
 			"Student should not be update as status is not valid",
 		},
@@ -313,7 +313,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"CORE",
 			},
-			errors.New("invalid phone"),
+			errors.InvalidParams{"Invalid Phone"},
 			entities.Student{},
 			"Student should not be update as status is not valid",
 		},
@@ -327,7 +327,7 @@ func TestService_Update(t *testing.T) {
 				entities.Company{ID: "1"},
 				"PENDING",
 			},
-			sql.ErrNoRows,
+			errors.EntityNotFound{"Student"},
 			entities.Student{},
 			"Student should not be update as no student with this id",
 		},
@@ -360,7 +360,7 @@ func TestService_Delete(t *testing.T) {
 	}{
 		{"1", nil, "Student with that ID should be deleted"},
 		{
-			"2", sql.ErrNoRows,
+			"2", errors.EntityNotFound{"Student"},
 			"Student with that ID is not present so error will be thrown",
 		},
 	}
@@ -393,13 +393,13 @@ func (m mockStudentStore) Get(ctx context.Context, name string, branch string, i
 				"9876543210", entities.Company{ID: "1"}, "Pending"},
 		}, nil
 	}
-	return []entities.Student{}, sql.ErrNoRows
+	return []entities.Student{}, errors.EntityNotFound{"Student"}
 }
 
 // GetById mock store for GetById for Student
 func (m mockStudentStore) GetById(ctx context.Context, id string) (entities.Student, error) {
 	if id != "1" {
-		return entities.Student{}, sql.ErrNoRows
+		return entities.Student{}, errors.EntityNotFound{"Student"}
 	}
 	return entities.Student{"1", "Test Student", "12/12/2000", "CSE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
@@ -407,19 +407,6 @@ func (m mockStudentStore) GetById(ctx context.Context, id string) (entities.Stud
 
 // Create mock store for Create of Student
 func (m mockStudentStore) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
-	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return entities.Student{}, errors.New("invalid phone no.")
-	}
-
-	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
-		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("invalid branch")
-	}
-
-	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
-		return entities.Student{}, errors.New("invalid status")
-	}
-
 	return entities.Student{
 		ID:      "1",
 		Name:    "Test Student",
@@ -433,41 +420,16 @@ func (m mockStudentStore) Create(ctx context.Context, student entities.Student) 
 
 // Update mock store for Update of Student
 func (m mockStudentStore) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
-	if student.ID != "1" {
-		return entities.Student{}, sql.ErrNoRows
-	}
-
-	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return entities.Student{}, errors.New("invalid phone no.")
-	}
-
-	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
-		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("invalid branch")
-	}
-
-	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
-		return entities.Student{}, errors.New("invalid status")
-	}
-
 	return entities.Student{"1", "Test Student", "12/12/2000", "ECE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
 }
 
 // Delete mock store for Delete of Student
 func (m mockStudentStore) Delete(ctx context.Context, id string) error {
-	if id != "1" {
-		return sql.ErrNoRows
-	}
 	return nil
 }
 
 // GetCompany mock store for GetCompany of Student
 func (m mockStudentStore) GetCompany(ctx context.Context, id string) (entities.Company, error) {
-	if id == "3" {
-		return entities.Company{}, sql.ErrNoRows
-	} else if id == "2" {
-		return entities.Company{"2", "Test Company", "DREAM IT"}, nil
-	}
 	return entities.Company{"1", "Test Company", "MASS"}, nil
 }

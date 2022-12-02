@@ -2,8 +2,8 @@ package company
 
 import (
 	"context"
-	"database/sql"
-	"errors"
+	"student-placement-api/errors"
+
 	"reflect"
 	"student-placement-api/entities"
 	"testing"
@@ -25,7 +25,7 @@ func TestService_GetByID(t *testing.T) {
 		},
 		{
 			"2",
-			sql.ErrNoRows,
+			errors.EntityNotFound{"Company"},
 			entities.Company{},
 			"Company with that ID is not present so error will be thrown",
 		},
@@ -74,7 +74,7 @@ func TestService_Create(t *testing.T) {
 				Name:     "Test Company",
 				Category: "NON IT",
 			},
-			errors.New("invalid category"),
+			errors.InvalidParams{"Invalid Category"},
 			entities.Company{},
 			"Company should not be added because of invalid category error will be thrown",
 		},
@@ -125,7 +125,7 @@ func TestService_Update(t *testing.T) {
 				"Test Company",
 				"NON CORE",
 			},
-			errors.New("invalid category"),
+			errors.InvalidParams{"Invalid Category"},
 			entities.Company{},
 			"Company should not be updated because of invalid category error will be thrown",
 		},
@@ -135,7 +135,7 @@ func TestService_Update(t *testing.T) {
 				"Test Company",
 				"CORE",
 			},
-			sql.ErrNoRows,
+			errors.EntityNotFound{"Company"},
 			entities.Company{},
 			"Company should not be updated because of invalid category error will be thrown",
 		},
@@ -167,7 +167,7 @@ func TestService_Delete(t *testing.T) {
 	}{
 		{"1", nil, "Company with that ID should be deleted"},
 		{
-			"2", sql.ErrNoRows,
+			"2", errors.EntityNotFound{"Company"},
 			"Company with that ID not is present error will be thrown",
 		},
 	}
@@ -188,40 +188,27 @@ type mockCompanyStore struct{}
 
 // Create mock store for Create of Company
 func (m mockCompanyStore) Create(ctx context.Context, company entities.Company) (entities.Company, error) {
-	switch company.Category {
-	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
-		return entities.Company{"1", "Test Company", "MASS"}, nil
-	default:
-		return entities.Company{}, errors.New("invalid category")
+	if company.ID == "2" {
+		return entities.Company{}, errors.ConnDone{}
 	}
+
+	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
 
 // GetByID mock store for GetByID for Company
 func (m mockCompanyStore) GetByID(ctx context.Context, id string) (entities.Company, error) {
 	if id != "1" {
-		return entities.Company{}, sql.ErrNoRows
+		return entities.Company{}, errors.EntityNotFound{"Company"}
 	}
 	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
 
 // Update mock store for Update of Company
 func (m mockCompanyStore) Update(ctx context.Context, company entities.Company) (entities.Company, error) {
-	if company.ID != "1" {
-		return entities.Company{}, sql.ErrNoRows
-	}
-
-	switch company.Category {
-	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
-		return entities.Company{"1", "Test Company", "CORE"}, nil
-	default:
-		return entities.Company{}, errors.New("invalid category")
-	}
+	return entities.Company{"1", "Test Company", "CORE"}, nil
 }
 
 // Delete mock store for Delete of Company
 func (m mockCompanyStore) Delete(ctx context.Context, id string) error {
-	if id != "1" {
-		return sql.ErrNoRows
-	}
 	return nil
 }
