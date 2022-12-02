@@ -3,9 +3,9 @@ package student
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
+	"student-placement-api/errors"
+
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -235,10 +235,9 @@ func TestHandler_GetByID(t *testing.T) {
 // TestHandler_Create test function to test Student Create handler
 func TestHandler_Create(t *testing.T) {
 	testcases := []struct {
-		body          entities.Student
-		expecStatus   int
-		expecResponse error
-		description   string
+		body        entities.Student
+		expStatus   int
+		description string
 	}{
 		{
 			entities.Student{
@@ -250,7 +249,6 @@ func TestHandler_Create(t *testing.T) {
 				Status:  "PENDING",
 			},
 			http.StatusCreated,
-			nil,
 			"Student should be added and status code should be 201",
 		},
 		{
@@ -263,7 +261,6 @@ func TestHandler_Create(t *testing.T) {
 				Status:  "PENDING",
 			},
 			http.StatusBadRequest,
-			errors.New("invalid branch"),
 			"Student should not be created as branch is not valid and status code should be 400",
 		},
 		{
@@ -276,7 +273,6 @@ func TestHandler_Create(t *testing.T) {
 				Status:  "PENDING",
 			},
 			http.StatusBadRequest,
-			errors.New("invalid phone"),
 			"Student should not be created as phone is not valid and status code should be 400",
 		},
 		{
@@ -289,7 +285,6 @@ func TestHandler_Create(t *testing.T) {
 				Status:  "SUCCESS",
 			},
 			http.StatusBadRequest,
-			errors.New("invalid status"),
 			"Student should not be created as status is not valid and status code should be 400",
 		},
 	}
@@ -302,9 +297,9 @@ func TestHandler_Create(t *testing.T) {
 
 		handler.Create(w, req)
 
-		if w.Code != testcases[i].expecStatus {
+		if w.Code != testcases[i].expStatus {
 			t.Errorf(" Test: %v\n Expected Code: %v\n Actual Code: %v\n Description: %v", i+1,
-				testcases[i].expecStatus, w.Code, testcases[i].description)
+				testcases[i].expStatus, w.Code, testcases[i].description)
 		}
 	}
 }
@@ -456,13 +451,13 @@ func (m mockStudentService) Get(ctx context.Context, name string, branch string,
 				"9876543210", entities.Company{ID: "1"}, "Pending"},
 		}, nil
 	}
-	return []entities.Student{}, errors.New("student not found")
+	return []entities.Student{}, errors.EntityNotFound{"Student not found"}
 }
 
 // GetByID mock services for GetByID for Student
 func (m mockStudentService) GetByID(ctx context.Context, id string) (entities.Student, error) {
 	if id != "1" {
-		return entities.Student{}, errors.New("student not found")
+		return entities.Student{}, errors.EntityNotFound{"Student"}
 	}
 	return entities.Student{"1", "Test Student 1", "12/12/2000", "CSE", "9876543210",
 		entities.Company{ID: "1"}, "PENDING"}, nil
@@ -470,22 +465,17 @@ func (m mockStudentService) GetByID(ctx context.Context, id string) (entities.St
 
 // Create mock service for Create of Student
 func (m mockStudentService) Create(ctx context.Context, student entities.Student) (entities.Student, error) {
-	if student.Name == "" || student.Phone == "" || (student.Company.ID == "" && student.Company.Name == "" &&
-		student.Company.Category == "") || student.Branch == "" || student.DOB == "" || student.Status == "" {
-		return entities.Student{}, errors.New("all the fields are required, name, phone, dob, branch, company, status")
-	}
-
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return entities.Student{}, errors.New("invalid phone no.")
+		return entities.Student{}, errors.InvalidParams{"Phone must be of 10-12 digits"}
 	}
 
 	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("invalid branch")
+		return entities.Student{}, errors.InvalidParams{"invalid branch"}
 	}
 
 	if !(student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED") {
-		return entities.Student{}, errors.New("invalid status")
+		return entities.Student{}, errors.InvalidParams{"invalid status"}
 	}
 
 	return entities.Student{
@@ -501,20 +491,20 @@ func (m mockStudentService) Create(ctx context.Context, student entities.Student
 // Update mock service for Update of Student
 func (m mockStudentService) Update(ctx context.Context, student entities.Student) (entities.Student, error) {
 	if student.ID != "1" {
-		return entities.Student{}, sql.ErrNoRows
+		return entities.Student{}, errors.EntityNotFound{"Student"}
 	}
 
 	if len(student.Phone) < 10 || len(student.Phone) > 12 {
-		return entities.Student{}, errors.New("invalid phone no.")
+		return entities.Student{}, errors.InvalidParams{"invalid phone no."}
 	}
 
 	if !(student.Branch == "CSE" || student.Branch == "ISE" || student.Branch == "MECH" || student.Branch == "CIVIL" ||
 		student.Branch == "ECE" || student.Branch == "EEE") {
-		return entities.Student{}, errors.New("invalid branch")
+		return entities.Student{}, errors.InvalidParams{"invalid branch"}
 	}
 
 	if student.Status == "PENDING" || student.Status == "ACCEPTED" || student.Status == "REJECTED" {
-		return entities.Student{}, errors.New("invalid status")
+		return entities.Student{}, errors.InvalidParams{"invalid status"}
 	}
 
 	return entities.Student{}, nil
@@ -523,7 +513,7 @@ func (m mockStudentService) Update(ctx context.Context, student entities.Student
 // Delete mock service for Delete of Student
 func (m mockStudentService) Delete(ctx context.Context, id string) error {
 	if id != "1" {
-		return sql.ErrNoRows
+		return errors.EntityNotFound{"Student"}
 	}
 	return nil
 }

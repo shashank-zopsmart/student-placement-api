@@ -3,9 +3,9 @@ package company
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
+	"student-placement-api/errors"
+
 	"net/http"
 	"net/http/httptest"
 	"student-placement-api/entities"
@@ -279,7 +279,7 @@ type mockCompanyService struct{}
 // GetByID mock services for GetByID for Company
 func (m mockCompanyService) GetByID(ctx context.Context, id string) (entities.Company, error) {
 	if id != "1" {
-		return entities.Company{}, sql.ErrNoRows
+		return entities.Company{}, errors.EntityNotFound{"Company"}
 	}
 	return entities.Company{"1", "Test Company", "MASS"}, nil
 }
@@ -290,28 +290,28 @@ func (m mockCompanyService) Create(ctx context.Context, company entities.Company
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return entities.Company{"1", "Test Company", "MASS"}, nil
 	default:
-		return entities.Company{}, errors.New("invalid category")
+		return entities.Company{}, errors.InvalidParams{"Invalid Category"}
 	}
 }
 
 // Update mock service for Update of Company
 func (m mockCompanyService) Update(ctx context.Context, company entities.Company) (entities.Company, error) {
 	if company.ID == "3" {
-		return entities.Company{}, sql.ErrNoRows
+		return entities.Company{}, errors.EntityNotFound{"Company"}
 	}
 
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return entities.Company{}, nil
 	default:
-		return entities.Company{}, errors.New("invalid category")
+		return entities.Company{}, errors.InvalidParams{"Invalid Category"}
 	}
 }
 
 // Delete mock service for Delete of Company
 func (m mockCompanyService) Delete(ctx context.Context, id string) error {
 	if id != "1" {
-		return sql.ErrNoRows
+		return errors.EntityNotFound{"Company"}
 	}
 	return nil
 }

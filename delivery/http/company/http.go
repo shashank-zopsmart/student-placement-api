@@ -38,6 +38,38 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Get handler to get company detail by ID
+func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	id := req.URL.Query().Get("id")
+	id = strings.TrimSpace(id)
+	if id == "" {
+		err := errors.MissisngParam{Params: []string{"id"}}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	result, err := handler.service.GetByID(ctx, id)
+	if err != nil {
+		err := errors.EntityNotFound{Entity: "Company"}
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	response, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(response)
+}
+
 // Create handler to create a new company
 func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
@@ -85,38 +117,6 @@ func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write(response)
-}
-
-// Get handler to get company detail by ID
-func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-
-	id := req.URL.Query().Get("id")
-	id = strings.TrimSpace(id)
-	if id == "" {
-		err := errors.MissisngParam{Params: []string{"id"}}
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	result, err := handler.service.GetByID(ctx, id)
-	if err != nil {
-		err := errors.EntityNotFound{Entity: "Company"}
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	response, err := json.Marshal(result)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
 	w.Write(response)
 }
 

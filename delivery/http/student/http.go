@@ -134,7 +134,7 @@ func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.Get(ctx, name, branch, includeCompanyFlag)
 	if err != nil {
 		err := errors.EntityNotFound{Entity: "Student"}
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(err.Error()))
 		return
 	}
@@ -159,7 +159,7 @@ func (handler handler) GetByID(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.GetByID(ctx, id)
 	if err != nil {
 		err := errors.EntityNotFound{Entity: "Student"}
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(err.Error()))
 		return
 	}
@@ -277,4 +277,3 @@ func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
 }
-
