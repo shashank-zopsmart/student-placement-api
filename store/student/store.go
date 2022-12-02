@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	"student-placement-api/entities"
+	"student-placement-api/errors"
 )
 
 type store struct {
@@ -23,7 +24,7 @@ func (store store) Create(ctx context.Context, student entities.Student) (entiti
 	_, err := store.db.Exec(query, student.ID, student.Name, student.DOB, student.Phone, student.Branch,
 		student.Company.ID, student.Status)
 	if err != nil {
-		return entities.Student{}, err
+		return entities.Student{}, errors.ConnDone{}
 	}
 	return student, nil
 }
@@ -37,7 +38,7 @@ func (store store) GetById(ctx context.Context, id string) (entities.Student, er
 
 	if err := row.Scan(&student.ID, &student.Name, &student.DOB, &student.Phone, &student.Branch,
 		&student.Status); err != nil {
-		return entities.Student{}, err
+		return entities.Student{}, errors.EntityNotFound{Entity: "Student"}
 	}
 
 	return student, nil
@@ -55,7 +56,7 @@ func (store store) Get(ctx context.Context, name string, branch string, includeC
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
-			return []entities.Student{}, err
+			return []entities.Student{}, errors.ConnDone{}
 		}
 
 		for rows.Next() {
@@ -69,7 +70,7 @@ func (store store) Get(ctx context.Context, name string, branch string, includeC
 
 		rows, err := store.db.Query(query, name, branch)
 		if err != nil {
-			return []entities.Student{}, err
+			return []entities.Student{}, errors.ConnDone{}
 		}
 
 		for rows.Next() {
@@ -81,7 +82,7 @@ func (store store) Get(ctx context.Context, name string, branch string, includeC
 	}
 
 	if len(students) == 0 {
-		return students, sql.ErrNoRows
+		return students, errors.EntityNotFound{Entity: "Student"}
 	}
 
 	return students, nil
@@ -94,7 +95,7 @@ func (store store) Update(ctx context.Context, student entities.Student) (entiti
 		student.Status, student.ID)
 
 	if err != nil {
-		return entities.Student{}, err
+		return entities.Student{}, errors.ConnDone{}
 	}
 	return student, nil
 }
@@ -104,7 +105,7 @@ func (store store) Delete(ctx context.Context, id string) error {
 	query := "DELETE FROM students WHERE id=?"
 	_, err := store.db.Exec(query, id)
 	if err != nil {
-		return err
+		return errors.ConnDone{}
 	}
 	return nil
 }
@@ -118,7 +119,7 @@ func (store store) GetCompany(ctx context.Context, id string) (entities.Company,
 	err := row.Scan(&company.ID, &company.Name, &company.Category)
 
 	if err != nil {
-		return entities.Company{}, err
+		return entities.Company{}, errors.EntityNotFound{Entity: "Company"}
 	}
 
 	return company, nil

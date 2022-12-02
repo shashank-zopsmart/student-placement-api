@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"student-placement-api/entities"
+	"student-placement-api/errors"
 )
 
 type store struct {
@@ -24,7 +25,7 @@ func (store store) Create(ctx context.Context, company entities.Company) (entiti
 
 	_, err := store.db.Exec(query, company.ID, company.Name, company.Category)
 	if err != nil {
-		return entities.Company{}, err
+		return entities.Company{}, errors.ConnDone{}
 	}
 
 	return company, nil
@@ -38,7 +39,7 @@ func (store store) GetByID(ctx context.Context, id string) (entities.Company, er
 	row := store.db.QueryRow(query, id)
 	err := row.Scan(&company.ID, &company.Name, &company.Category)
 	if err != nil {
-		return entities.Company{}, err
+		return entities.Company{}, errors.EntityNotFound{Entity: "Company"}
 	}
 
 	return company, nil
@@ -50,7 +51,7 @@ func (store store) Update(ctx context.Context, company entities.Company) (entiti
 
 	_, err := store.db.Exec(query, company.Name, company.Category, company.ID)
 	if err != nil {
-		return entities.Company{}, err
+		return entities.Company{}, errors.ConnDone{}
 	}
 
 	return company, nil
@@ -61,7 +62,7 @@ func (store store) Delete(ctx context.Context, id string) error {
 	query := "DELETE FROM companies WHERE id=?"
 	_, err := store.db.Exec(query, id)
 	if err != nil {
-		return err
+		return errors.ConnDone{}
 	}
 	return nil
 }
