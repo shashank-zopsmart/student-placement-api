@@ -102,8 +102,8 @@ func (handler handler) Create(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.Create(ctx, company)
 	if err != nil {
 		switch err.(type) {
-		case errors.ConnDone, errors.InvalidParams:
-			w.WriteHeader(http.StatusBadRequest)
+		case errors.ConnDone:
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 		w.Write([]byte(err.Error()))
 		return
@@ -162,8 +162,8 @@ func (handler handler) Update(w http.ResponseWriter, req *http.Request) {
 	result, err := handler.service.Update(ctx, company)
 	if err != nil {
 		switch err.(type) {
-		case errors.ConnDone, errors.InvalidParams:
-			w.WriteHeader(http.StatusBadRequest)
+		case errors.ConnDone:
+			w.WriteHeader(http.StatusInternalServerError)
 		case errors.EntityNotFound:
 			w.WriteHeader(http.StatusNotFound)
 		}

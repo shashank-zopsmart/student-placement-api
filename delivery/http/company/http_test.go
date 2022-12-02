@@ -58,6 +58,16 @@ func TestHandler_Handler(t *testing.T) {
 			http.MethodDelete,
 			"Company with that ID should be deleted and status code should be 200",
 		},
+		{
+			entities.Company{
+				Name:     "Test Company",
+				Category: "MASS",
+			},
+			http.StatusMethodNotAllowed,
+			entities.ResponseMessage{"Method not allowed"},
+			http.MethodPatch,
+			"This http method is not allowed and status code should be 405",
+		},
 	}
 
 	for i := range testcases {
@@ -70,8 +80,11 @@ func TestHandler_Handler(t *testing.T) {
 			reqBody, _ := json.Marshal(testcases[i].body)
 			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(entities.Company).ID,
 				bytes.NewBuffer(reqBody))
-		default:
+		case http.MethodGet, http.MethodDelete:
 			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(string), nil)
+		default:
+			reqBody, _ := json.Marshal(testcases[i].body)
+			req = httptest.NewRequest(testcases[i].method, URL, bytes.NewBuffer(reqBody))
 		}
 		w := httptest.NewRecorder()
 		handler := New(mockCompanyService{})
@@ -135,7 +148,7 @@ func TestHandler_Get(t *testing.T) {
 // TestHandler_Create test function to test Company Create handler
 func TestHandler_Create(t *testing.T) {
 	testcases := []struct {
-		body          entities.Company
+		body          interface{}
 		expecStatus   int
 		expecResponse interface{}
 		description   string
@@ -158,9 +171,28 @@ func TestHandler_Create(t *testing.T) {
 				Name: "Test Company 2",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Error: Name and Category required"},
+			entities.ResponseMessage{"Invalid "},
 			"Company should not be created as both parameters are mandatory is not valid and status code " +
 				"should be 400",
+		},
+		{
+			struct {
+				RandomParam string `json:"random_param"`
+			}{
+				"random value",
+			},
+			http.StatusBadRequest,
+			"Invalid request body ",
+			"Company should not be created Invalid request body and status code should be 400",
+		},
+		{
+			entities.Company{
+				Name:     "Conn Done",
+				Category: "MASS",
+			},
+			http.StatusInternalServerError,
+			"Database connection closed",
+			"Company should be added and status code should be 500",
 		},
 	}
 
@@ -182,9 +214,9 @@ func TestHandler_Create(t *testing.T) {
 // TestHandler_Update test function to test Company Update handler
 func TestHandler_Update(t *testing.T) {
 	testcases := []struct {
-		body          entities.Company
+		body          interface{}
 		expecStatus   int
-		expecResponse entities.ResponseMessage
+		expecResponse interface{}
 		description   string
 	}{
 		{
@@ -215,11 +247,37 @@ func TestHandler_Update(t *testing.T) {
 			entities.ResponseMessage{"Error: ID required"},
 			"Company should not be update as id is missing and status code should be 400",
 		},
+		{
+			entities.Company{ID: "1", Name: "Conn Done", Category: "MASS"},
+			http.StatusInternalServerError,
+			"Database connection closed",
+			"Database connection closed and status code should be 500",
+		},
+		{
+			struct {
+				RandomParam string `json:"random_param"`
+			}{
+				"random value",
+			},
+			http.StatusBadRequest,
+			"Invalid request body ",
+			"Company should not be created Invalid request body and status code should be 400",
+		},
+		{
+			entities.Company{ID: "3", Name: "Conn Done", Category: "MASS"},
+			http.StatusNotFound,
+			"Company not found",
+			"Company with this id doesn't exist and status code should be 404",
+		},
 	}
 
 	for i := range testcases {
 		reqBody, _ := json.Marshal(testcases[i].body)
-		req := httptest.NewRequest(http.MethodPut, URL+"?id="+testcases[i].body.ID, bytes.NewReader(reqBody))
+		company, ok := testcases[i].body.(entities.Company)
+		if !ok && company.Name == "" {
+			company.ID = "1"
+		}
+		req := httptest.NewRequest(http.MethodPut, URL+"?id="+company.ID, bytes.NewReader(reqBody))
 		w := httptest.NewRecorder()
 		handler := New(mockCompanyService{})
 
@@ -286,6 +344,9 @@ func (m mockCompanyService) GetByID(ctx context.Context, id string) (entities.Co
 
 // Create mock service for Create of Company
 func (m mockCompanyService) Create(ctx context.Context, company entities.Company) (entities.Company, error) {
+	if company.Name == "Conn Done" {
+		return entities.Company{}, errors.ConnDone{}
+	}
 	switch company.Category {
 	case "MASS", "DREAM IT", "OPEN DREAM", "CORE":
 		return entities.Company{"1", "Test Company", "MASS"}, nil
@@ -298,6 +359,10 @@ func (m mockCompanyService) Create(ctx context.Context, company entities.Company
 func (m mockCompanyService) Update(ctx context.Context, company entities.Company) (entities.Company, error) {
 	if company.ID == "3" {
 		return entities.Company{}, errors.EntityNotFound{"Company"}
+	}
+
+	if company.Name == "Conn Done" {
+		return entities.Company{}, errors.ConnDone{}
 	}
 
 	switch company.Category {
