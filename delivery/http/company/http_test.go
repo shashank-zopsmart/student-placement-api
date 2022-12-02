@@ -295,7 +295,7 @@ func TestHandler_Delete(t *testing.T) {
 	testcases := []struct {
 		id            string
 		expecStatus   int
-		expecResponse entities.ResponseMessage
+		expecResponse interface{}
 		description   string
 	}{
 		{
@@ -309,6 +309,12 @@ func TestHandler_Delete(t *testing.T) {
 			http.StatusNotFound,
 			entities.ResponseMessage{"Error: Company not found"},
 			"Company with that ID is present so a company should be returned and status code should be 200",
+		},
+		{
+			"5",
+			http.StatusInternalServerError,
+			"Database connection closed",
+			"Database connection closedd and status code should be 500",
 		},
 		{
 			"",
@@ -375,6 +381,9 @@ func (m mockCompanyService) Update(ctx context.Context, company entities.Company
 
 // Delete mock service for Delete of Company
 func (m mockCompanyService) Delete(ctx context.Context, id string) error {
+	if id == "5" {
+		return errors.ConnDone{}
+	}
 	if id != "1" {
 		return errors.EntityNotFound{"Company"}
 	}

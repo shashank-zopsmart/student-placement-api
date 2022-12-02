@@ -39,6 +39,14 @@ func TestHandler_Handler(t *testing.T) {
 			"Student with that ID is present so a company should be returned and status code should be 200",
 		},
 		{
+			bodyStruct{name: "Student", branch: "CSE", includeCompany: "false"},
+			http.StatusOK,
+			entities.Student{"1", "Student", "12/12/2000", "CSE",
+				"9876543210", entities.Company{}, "Pending"},
+			http.MethodGet,
+			"Student with that ID is present so a company should be returned and status code should be 200",
+		},
+		{
 			bodyStruct{"", "", "", ""},
 			http.StatusBadRequest,
 			entities.Student{},
@@ -88,6 +96,21 @@ func TestHandler_Handler(t *testing.T) {
 			http.MethodDelete,
 			"Student with that ID should be deleted and status code should be 200",
 		},
+		{
+			entities.Student{
+				"1",
+				"Test Student",
+				"12/12/2000",
+				"ECE",
+				"9876543210",
+				entities.Company{ID: "1"},
+				"CORE",
+			},
+			http.StatusMethodNotAllowed,
+			entities.ResponseMessage{"Error: invalid branch"},
+			http.MethodPatch,
+			"Student should be updated and status code should be 200",
+		},
 	}
 
 	for i := range testcases {
@@ -98,10 +121,12 @@ func TestHandler_Handler(t *testing.T) {
 			req = httptest.NewRequest(testcases[i].method, URL, bytes.NewBuffer(reqBody))
 		case http.MethodDelete:
 			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(string), nil)
-		default:
+		case http.MethodGet:
 			req = httptest.NewRequest(testcases[i].method, URL+"?id="+testcases[i].body.(bodyStruct).id+
 				"&name="+testcases[i].body.(bodyStruct).name+"&branch="+testcases[i].body.(bodyStruct).branch+
 				"&includeCompany="+testcases[i].body.(bodyStruct).includeCompany, nil)
+		default:
+			req = httptest.NewRequest(testcases[i].method, URL, nil)
 		}
 		w := httptest.NewRecorder()
 		handler := New(mockStudentService{})
@@ -120,7 +145,7 @@ func TestHandler_Get(t *testing.T) {
 	type bodyStruct struct {
 		name           string
 		branch         string
-		includeCompany bool
+		includeCompany string
 	}
 
 	testcases := []struct {
@@ -133,7 +158,7 @@ func TestHandler_Get(t *testing.T) {
 			bodyStruct{
 				"Student",
 				"CSE",
-				false,
+				"false",
 			},
 			http.StatusOK,
 			[]entities.Student{
@@ -146,7 +171,7 @@ func TestHandler_Get(t *testing.T) {
 			bodyStruct{
 				"Student",
 				"CSE",
-				true,
+				"true",
 			},
 			http.StatusOK,
 			[]entities.Student{
@@ -160,7 +185,7 @@ func TestHandler_Get(t *testing.T) {
 			bodyStruct{
 				"Student",
 				"CSE2",
-				false,
+				"false",
 			},
 			http.StatusNotFound,
 			[]entities.Student{},
@@ -171,12 +196,22 @@ func TestHandler_Get(t *testing.T) {
 			bodyStruct{
 				"Student5",
 				"CSE",
-				false,
+				"false",
 			},
 			http.StatusNotFound,
 			[]entities.Student{},
 			"Student with that name and branch branch is not present so empty json object should be returned" +
 				" with status code 404",
+		},
+		{
+			bodyStruct{
+				"Student5",
+				"CSE",
+				"random",
+			},
+			http.StatusBadRequest,
+			[]entities.Student{},
+			"includeCompany can only be either true or false so status code is 400",
 		},
 	}
 
@@ -235,7 +270,7 @@ func TestHandler_GetByID(t *testing.T) {
 // TestHandler_Create test function to test Student Create handler
 func TestHandler_Create(t *testing.T) {
 	testcases := []struct {
-		body        entities.Student
+		body        interface{}
 		expStatus   int
 		description string
 	}{
@@ -250,6 +285,11 @@ func TestHandler_Create(t *testing.T) {
 			},
 			http.StatusCreated,
 			"Student should be added and status code should be 201",
+		},
+		{
+			entities.Student{},
+			http.StatusBadRequest,
+			"No details of student passed so status code should be 400",
 		},
 		{
 			entities.Student{
@@ -287,6 +327,15 @@ func TestHandler_Create(t *testing.T) {
 			http.StatusBadRequest,
 			"Student should not be created as status is not valid and status code should be 400",
 		},
+		{
+			struct {
+				RandomParam string `json:"random_param"`
+			}{
+				"random value",
+			},
+			http.StatusBadRequest,
+			"Malformed request body and status code should be 400",
+		},
 	}
 
 	for i := range testcases {
@@ -307,10 +356,9 @@ func TestHandler_Create(t *testing.T) {
 // TestHandler_Update test function to test Student Update handler
 func TestHandler_Update(t *testing.T) {
 	testcases := []struct {
-		body          entities.Student
-		expecStatus   int
-		expecResponse entities.ResponseMessage
-		description   string
+		body        entities.Student
+		expecStatus int
+		description string
 	}{
 		{
 			entities.Student{
@@ -323,7 +371,6 @@ func TestHandler_Update(t *testing.T) {
 				"CORE",
 			},
 			http.StatusOK,
-			entities.ResponseMessage{"Student Updated"},
 			"Student should be updated and status code should be 200",
 		},
 		{
@@ -337,7 +384,6 @@ func TestHandler_Update(t *testing.T) {
 				"ACCEPTED",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Branch"},
 			"Student should not be update as branch is not valid and status code should be 400",
 		},
 		{
@@ -351,7 +397,6 @@ func TestHandler_Update(t *testing.T) {
 				"REJECTED",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Phone"},
 			"Student should not be update as phone no. is not valid and status code should be 400",
 		},
 		{
@@ -365,7 +410,6 @@ func TestHandler_Update(t *testing.T) {
 				"CORE",
 			},
 			http.StatusBadRequest,
-			entities.ResponseMessage{"Invalid Status"},
 			"Student should not be update as status is not valid and status code should be 400",
 		},
 		{
@@ -379,7 +423,11 @@ func TestHandler_Update(t *testing.T) {
 				"PENDING",
 			},
 			http.StatusNotFound,
-			entities.ResponseMessage{"Student not found"},
+			"Student should not be update as no student with this id and status code should be 404",
+		},
+		{
+			entities.Student{ID: "1"},
+			http.StatusBadRequest,
 			"Student should not be update as no student with this id and status code should be 404",
 		},
 	}
@@ -419,6 +467,12 @@ func TestHandler_Delete(t *testing.T) {
 			entities.ResponseMessage{"No student with that ID"},
 			"Student with that ID is present so a company should be returned and status code should be 200",
 		},
+		{
+			"",
+			http.StatusBadRequest,
+			entities.ResponseMessage{"No student with that ID"},
+			"Student with that ID is present so a company should be returned and status code should be 200",
+		},
 	}
 
 	for i := range testcases {
@@ -438,7 +492,8 @@ func TestHandler_Delete(t *testing.T) {
 type mockStudentService struct{}
 
 // Get mock services for Get for Student
-func (m mockStudentService) Get(ctx context.Context, name string, branch string, includeCompany bool) ([]entities.Student, error) {
+func (m mockStudentService) Get(ctx context.Context, name string, branch string,
+	includeCompany bool) ([]entities.Student, error) {
 	if name == "Student" && branch == "CSE" {
 		if includeCompany == true {
 			return []entities.Student{
@@ -460,7 +515,7 @@ func (m mockStudentService) GetByID(ctx context.Context, id string) (entities.St
 		return entities.Student{}, errors.EntityNotFound{"Student"}
 	}
 	return entities.Student{"1", "Test Student 1", "12/12/2000", "CSE", "9876543210",
-		entities.Company{ID: "1"}, "PENDING"}, nil
+		entities.Company{}, "PENDING"}, nil
 }
 
 // Create mock service for Create of Student

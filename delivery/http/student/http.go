@@ -31,7 +31,7 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 		branch := req.URL.Query().Get("branch")
 		includeCompany := req.URL.Query().Get("includeCompany")
 
-		if id == "" && name == "" && branch == "" && includeCompany == "" {
+		if id == "" && (name == "" || branch == "" || includeCompany == "") {
 			err := errors.MissisngParam{Params: []string{"id", "name", "branch", "includeCompany"}}
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
@@ -41,14 +41,7 @@ func (handler handler) Handler(w http.ResponseWriter, req *http.Request) {
 		if id != "" {
 			handler.GetByID(w, req)
 		} else {
-			if name == "" || branch == "" || includeCompany == "" {
-				err := errors.MissisngParam{Params: []string{"name", "branch", "includeCompany"}}
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(err.Error()))
-				return
-			} else {
-				handler.Get(w, req)
-			}
+			handler.Get(w, req)
 		}
 	case http.MethodPost:
 		handler.Create(w, req)
@@ -120,13 +113,10 @@ func (handler handler) Get(w http.ResponseWriter, req *http.Request) {
 	branch := strings.TrimSpace(req.URL.Query().Get("branch"))
 	includeCompany := strings.TrimSpace(req.URL.Query().Get("includeCompany"))
 
-	if includeCompany == "" {
-		includeCompany = "false"
-	}
-
 	includeCompanyFlag, err := strconv.ParseBool(includeCompany)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		err = errors.InvalidParams{"includeCompany should be either true or false"}
 		w.Write([]byte(err.Error()))
 		return
 	}

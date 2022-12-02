@@ -199,8 +199,8 @@ func (handler handler) Delete(w http.ResponseWriter, req *http.Request) {
 	err := handler.service.Delete(ctx, id)
 	if err != nil {
 		switch err.(type) {
-		case errors.ConnDone, errors.InvalidParams:
-			w.WriteHeader(http.StatusBadRequest)
+		case errors.ConnDone:
+			w.WriteHeader(http.StatusInternalServerError)
 		case errors.EntityNotFound:
 			w.WriteHeader(http.StatusNotFound)
 		}
