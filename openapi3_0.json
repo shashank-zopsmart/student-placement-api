@@ -1,0 +1,584 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Student Recruitment System API",
+    "description": "APIs for Student Recruitment System",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Company"
+    },
+    {
+      "name": "Student"
+    }
+  ],
+  "paths": {
+    "/company": {
+      "post": {
+        "tags": [
+          "Company"
+        ],
+        "description": "Create a new company",
+        "requestBody": {
+          "description": "Name and Category of company are required and category can only be MASS, DREAM IT, OPEN DREAM, CORE",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Company created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/company?id={id}": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "description": "Get details of a company",
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id of company",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company exists, returns details of company",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company with given ID doesn't exit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMessage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Company"
+        ],
+        "description": "Update a company",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID of the company to be updated, required",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "Name and category of company to be passed",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID, Name or Category of company is invalid or missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Missing Params: ID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company with given ID doesn't exits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Company doesn't exist"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Company"
+        ],
+        "description": "Delete a company",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID of the company to be delete, required",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company deleted successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID of the company is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Missing Params: ID"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Company with given ID doesn't exits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Company doesn't exist"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/student": {
+      "post": {
+        "tags": [
+          "Student"
+        ],
+        "description": "Create a new student",
+        "requestBody": {
+          "description": "Name, DOB, Phone, Branch Company ID, Status of student. All fields are required. Branch can only be CSE, CSE, ISE, MECH, CIVIL, ECE, EEE.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Student created Successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentFullResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/student?id={id}": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "description": "Get detail of a student by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID of the student",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fetched student details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Student with that ID doesn't exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Student not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Student"
+        ],
+        "description": "Update a student",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID of the student to be updated, required",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "Name, DOB, Phone, Branch Company ID, Status of student. All fields are required. Branch can only be CSE, CSE, ISE, MECH, CIVIL, ECE, EEE.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update operation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentFullResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID, Name, DOB, Phone, Branch Company ID, Status of student",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Missing Params: ID, Name, DOB, Phone, Branch Company ID, Status"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Student with given ID doesn't exits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Student doesn't exist"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Student"
+        ],
+        "description": "Delete a student",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "ID of the Student to be delete, required",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student deleted successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID of the student is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Missing Params: ID, Name, DOB, Phone, Branch Company_ID, Status"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Student with given ID doesn't exits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Student doesn't exist"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/student?name={name}&branch={branch}&includeCompany={includeCompany}": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "description": "Get details of student on the basis of name and branch. If includeCompany is true then company detials will also be returned",
+        "parameters": [
+          {
+            "name": "name",
+            "description": "Name of student",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branch",
+            "description": "Branch of student",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeCompany",
+            "description": "Flag to set whether to display company or not",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentFullResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "name or branch of the student is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Missing Params: ID, Name, DOB, Phone, Branch Company_ID, Status"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Student with given name and branch doesn't exits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Student doesn't exist"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompanyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "26f315c1-1eab-4113-86a1-4264a4aa7799"
+          },
+          "name": {
+            "type": "string",
+            "example": "Company"
+          },
+          "category": {
+            "type": "string",
+            "example": "MASS"
+          }
+        }
+      },
+      "CompanyRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Company"
+          },
+          "category": {
+            "type": "string",
+            "example": "MASS"
+          }
+        }
+      },
+      "StudentRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Student"
+          },
+          "dob": {
+            "type": "string",
+            "example": "12/12/2000"
+          },
+          "phone": {
+            "type": "string",
+            "example": 9876543210
+          },
+          "branch": {
+            "type": "string",
+            "example": "CSE"
+          },
+          "company_id": {
+            "type": "string",
+            "example": "26f315c1-1eab-4113-86a1-4264a4aa7799"
+          },
+          "status": {
+            "type": "string",
+            "example": "ACCEPTED"
+          }
+        }
+      },
+      "StudentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "e26cdf0b-ac28-4d3c-a4ca-2bc3afd30b06"
+          },
+          "name": {
+            "type": "string",
+            "example": "Student"
+          },
+          "dob": {
+            "type": "string",
+            "example": "12/12/2000"
+          },
+          "phone": {
+            "type": "string",
+            "example": 9876543210
+          },
+          "branch": {
+            "type": "string",
+            "example": "CSE"
+          },
+          "status": {
+            "type": "string",
+            "example": "ACCEPTED"
+          }
+        }
+      },
+      "StudentFullResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "e26cdf0b-ac28-4d3c-a4ca-2bc3afd30b06"
+          },
+          "name": {
+            "type": "string",
+            "example": "Student"
+          },
+          "dob": {
+            "type": "string",
+            "example": "12/12/2000"
+          },
+          "phone": {
+            "type": "string",
+            "example": 9876543210
+          },
+          "branch": {
+            "type": "string",
+            "example": "CSE"
+          },
+          "company": {
+            "$ref": "#/components/schemas/CompanyResponse"
+          },
+          "status": {
+            "type": "string",
+            "example": "ACCEPTED"
+          }
+        }
+      },
+      "ResponseMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
